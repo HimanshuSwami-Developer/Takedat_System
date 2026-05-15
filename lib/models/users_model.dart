@@ -8,6 +8,7 @@ class UserModel {
   final String address;
   final String role;
   final DateTime? createdAt;
+  final bool isActive;
 
   UserModel({
     this.id,
@@ -17,6 +18,7 @@ class UserModel {
     required this.phone,
     required this.address,
     required this.role,
+    required this.isActive,
     this.createdAt,
   });
 
@@ -30,6 +32,7 @@ class UserModel {
       phone: '',
       address: '',
       role: '',
+      isActive: false,
       createdAt: null,
     );
   }
@@ -43,6 +46,7 @@ class UserModel {
       "phone": phone,
       "address": address,
       "role": role,
+      "is_active": isActive,
     };
   }
 
@@ -65,6 +69,8 @@ class UserModel {
 
       role: map['role'] ?? '',
 
+      isActive: map['is_active'] == true || map['is_active'] == 1,
+
       createdAt: map['created_at'] != null
           ? DateTime.tryParse(
               map['created_at'].toString(),
@@ -82,6 +88,7 @@ class UserModel {
     String? phone,
     String? address,
     String? role,
+      bool? isActive,
     DateTime? createdAt,
   }) {
     return UserModel(
@@ -92,6 +99,7 @@ class UserModel {
       phone: phone ?? this.phone,
       address: address ?? this.address,
       role: role ?? this.role,
+      isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -107,6 +115,7 @@ UserModel(
   phone: $phone,
   address: $address,
   role: $role,
+  isActive: $isActive,
   createdAt: $createdAt
 )
 ''';

@@ -1,21 +1,42 @@
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image/image.dart' as img;
 import 'package:signature/signature.dart';
 import 'package:takedat_app/core/app_colors.dart';
 import 'package:takedat_app/core/app_text.dart';
 import 'package:takedat_app/screens/auth/widget/custom_button.dart';
 
-void showSignatureSheet(BuildContext context) {
-  showModalBottomSheet(
+Future<Uint8List?> showSignatureSheet(
+  BuildContext context, {
+
+  required String title,
+
+  required String documentPath,
+}) async {
+  return await showModalBottomSheet<Uint8List>(
     context: context,
+
     isScrollControlled: true,
+
     backgroundColor: Colors.transparent,
-    builder: (_) => const SignatureSheet(),
+
+    builder: (_) => SignatureSheet(title: title, documentPath: documentPath),
   );
 }
 
 class SignatureSheet extends StatefulWidget {
-  const SignatureSheet({super.key});
+  final String documentPath;
+  final String title;
+
+  const SignatureSheet({
+    super.key,
+    required this.documentPath,
+    required this.title,
+  });
 
   @override
   State<SignatureSheet> createState() => _SignatureSheetState();
@@ -28,6 +49,83 @@ class _SignatureSheetState extends State<SignatureSheet> {
     exportBackgroundColor: Colors.white,
   );
 
+  Uint8List? signatureBytes;
+
+Future<void> saveSignature() async {
+
+  if (_controller.isEmpty) return;
+
+  final signatureData =
+      await _controller.toPngBytes();
+
+  if (signatureData == null) return;
+
+  /// LOAD DOCUMENT IMAGE
+  final ByteData documentBytes =
+      await rootBundle.load(
+    widget.documentPath,
+  );
+
+  final Uint8List documentUint8 =
+      documentBytes.buffer
+          .asUint8List();
+
+  /// DECODE
+  final img.Image? documentImage =
+      img.decodeImage(documentUint8);
+
+  final img.Image? signatureImage =
+      img.decodeImage(signatureData);
+
+  if (documentImage == null ||
+      signatureImage == null) {
+    return;
+  }
+
+  /// RESIZE SIGNATURE
+  final resizedSignature =
+      img.copyResize(
+
+    signatureImage,
+
+    width: 180,
+
+    height: 80,
+  );
+
+  /// ADD SIGNATURE
+  img.compositeImage(
+
+    documentImage,
+
+    resizedSignature,
+
+    dstX:
+        documentImage.width - 240,
+
+    dstY:
+        documentImage.height - 180,
+  );
+
+  /// FINAL IMAGE
+  final finalImage =
+      Uint8List.fromList(
+
+    img.encodePng(documentImage),
+  );
+
+  /// PREVIEW
+  setState(() {
+
+    signatureBytes = finalImage;
+  });
+
+  /// RETURN IMAGE
+  Navigator.pop(
+    context,
+    finalImage,
+  );
+}
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -35,49 +133,73 @@ class _SignatureSheetState extends State<SignatureSheet> {
       margin: const EdgeInsets.only(top: 80),
       decoration: const BoxDecoration(
         color: Color(0xFFF4F7F5),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-
-          /// 🔹 TOP BAR
+          /// TOP BAR
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Review & Sign",
+                widget.title,
                 style: AppTextStyles.label.copyWith(
                   fontSize: 16,
                   color: Colors.black,
                 ),
               ),
+
               IconButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => context.pop(),
                 icon: const Icon(Icons.close),
-              )
+              ),
             ],
           ),
 
           const SizedBox(height: 10),
 
-          /// 🔹 DOCUMENT PREVIEW
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.white,
-            ),
-            child: const Center(
-              child: Text("300 x 300"),
+          /// DOCUMENT PREVIEW
+          GestureDetector(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (_) {
+                  return Dialog(
+                    backgroundColor: Colors.transparent,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: signatureBytes != null
+                          ? Image.memory(signatureBytes!, fit: BoxFit.contain)
+                          : Image.asset(
+                              widget.documentPath,
+                              fit: BoxFit.contain,
+                            ),
+                    ),
+                  );
+                },
+              );
+            },
+            child: Container(
+              height: 220,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(14),
+                color: Colors.white,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: signatureBytes != null
+                    ? Image.memory(signatureBytes!, fit: BoxFit.contain)
+                    : Image.asset(widget.documentPath, fit: BoxFit.contain),
+              ),
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
-          /// 🔹 DRAW HEADER
+          /// HEADER
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -88,13 +210,18 @@ class _SignatureSheetState extends State<SignatureSheet> {
                   color: Colors.black54,
                 ),
               ),
+
               GestureDetector(
-                onTap: () => _controller.clear(),
+                onTap: () {
+                  _controller.clear();
+
+                  setState(() {
+                    signatureBytes = null;
+                  });
+                },
                 child: Text(
                   "Clear",
-                  style: AppTextStyles.small.copyWith(
-                    color: AppColors.primary,
-                  ),
+                  style: AppTextStyles.small.copyWith(color: AppColors.primary),
                 ),
               ),
             ],
@@ -102,16 +229,13 @@ class _SignatureSheetState extends State<SignatureSheet> {
 
           const SizedBox(height: 10),
 
-          /// 🔹 SIGNATURE PAD
+          /// SIGN PAD
           Container(
-            height: 140,
+            height: 150,
             width: double.infinity,
             decoration: BoxDecoration(
-              border: Border.all(
-                color: Colors.grey.shade300,
-                style: BorderStyle.solid,
-              ),
-              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Signature(
               controller: _controller,
@@ -119,42 +243,41 @@ class _SignatureSheetState extends State<SignatureSheet> {
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
-          /// 🔹 BUTTONS
+          /// BUTTONS
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => context.pop(),
                   style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(50),
+                    minimumSize: const Size.fromHeight(52),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: Text("Discard",style: AppTextStyles.label.copyWith(color: AppColors.primary),),
+                  child: Text(
+                    "Discard",
+                    style: AppTextStyles.label.copyWith(
+                      color: AppColors.primary,
+                    ),
+                  ),
                 ),
               ),
+
               const SizedBox(width: 12),
+
               Expanded(
                 child: CustomButton(
                   text: "Save Signature",
-                  onTap: () async {
-                    if (_controller.isNotEmpty) {
-                      final data = await _controller.toPngBytes();
-
-                      /// 👉 You can store or send this image
-                      print("Signature saved: ${data?.length}");
-                      context.pop();
-                    }
-                  },
+                  onTap: saveSignature,
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
         ],
       ),
     );
