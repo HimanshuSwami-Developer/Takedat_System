@@ -3,6 +3,8 @@ import 'package:takedat_app/core/app_colors.dart';
 import 'package:takedat_app/core/app_text.dart';
 import 'package:takedat_app/screens/auth/widget/custom_button.dart';
 
+import '../../widget/ocr_documents.dart';
+
 class DocumentUploadStep extends StatelessWidget {
   final VoidCallback onNext;
   const DocumentUploadStep({super.key, required this.onNext});
@@ -59,11 +61,15 @@ class DocumentUploadStep extends StatelessWidget {
           const SizedBox(height: 12),
 
           /// 🔹 DOCUMENT LIST
-          _docItem("Blue ACT Certification", "Expires: 12/2025"),
-          _docItem("Orange ACT Certification", "Expires: 08/2026"),
-          _docItem("SIA Licence", "Expires: 05/2027"),
-          _docItem("Share Code", "Expires: 01/2025"),
-          _docItem("First Aid Certification", "Expires: 11/2026"),
+          OCRDocumentCard(title: "Blue ACT Certification"),
+
+          OCRDocumentCard(title: "Orange ACT Certification"),
+
+          OCRDocumentCard(title: "SIA Licence"),
+
+          OCRDocumentCard(title: "Share Code"),
+
+          OCRDocumentCard(title: "First Aid Certification"),
 
           const SizedBox(height: 12),
 
@@ -73,82 +79,6 @@ class DocumentUploadStep extends StatelessWidget {
             icon: Icons.arrow_forward,
             onTap: onNext,
           ),
-        ],
-      ),
-    );
-  }
-
-  /// ============================
-  /// 🔹 DOCUMENT ITEM
-  /// ============================
-  Widget _docItem(String title, String expiry) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8),
-        ],
-      ),
-      child: Row(
-        children: [
-          /// ICON BOX
-          Container(
-            height: 40,
-            width: 40,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.description, size: 18),
-          ),
-
-          const SizedBox(width: 12),
-
-          /// TEXT
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTextStyles.label.copyWith(color: Colors.black),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  expiry,
-                  style: AppTextStyles.small.copyWith(color: Colors.black54),
-                ),
-
-                const SizedBox(height: 4),
-
-                Row(
-                  children: [
-                    Container(
-                      height: 6,
-                      width: 6,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      "Processing...",
-                      style: AppTextStyles.small.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          /// MENU
-          const Icon(Icons.more_vert),
         ],
       ),
     );

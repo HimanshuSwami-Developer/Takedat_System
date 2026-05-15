@@ -14,7 +14,7 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  int step = 1;
+  int step = 2;
 
   @override
   Widget build(BuildContext context) {

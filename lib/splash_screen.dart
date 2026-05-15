@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:takedat_app/constant/session_manager.dart';
 import 'package:takedat_app/core/app_colors.dart';
 import 'package:takedat_app/core/app_text.dart';
 import 'package:takedat_app/router/my_routes.dart';
-
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,14 +14,17 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-
   @override
   void initState() {
     super.initState();
 
     /// ⏱ 2 sec delay → GoRouter navigation
     Timer(const Duration(seconds: 2), () {
-      context.go(MyRoutes.loginScreen);
+      if (SessionManager.isLoggedIn()) {
+        context.go(MyRoutes.attendanceScreen);
+      } else {
+        context.go(MyRoutes.loginScreen);
+      }
     });
   }
 
@@ -49,13 +52,11 @@ class _SplashScreenState extends State<SplashScreen> {
         child: SafeArea(
           child: Stack(
             children: [
-
               /// 🔹 CENTER CONTENT
               Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-
                     /// ICON BOX
                     Container(
                       padding: const EdgeInsets.all(18),
@@ -66,7 +67,7 @@ class _SplashScreenState extends State<SplashScreen> {
                           BoxShadow(
                             color: AppColors.primary.withOpacity(0.4),
                             blurRadius: 40,
-                          )
+                          ),
                         ],
                       ),
                       child: Container(
@@ -88,9 +89,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     /// APP NAME
                     Text(
                       "Takedat",
-                      style: AppTextStyles.headline.copyWith(
-                        fontSize: 28,
-                      ),
+                      style: AppTextStyles.headline.copyWith(fontSize: 28),
                     ),
 
                     const SizedBox(height: 6),
@@ -98,22 +97,18 @@ class _SplashScreenState extends State<SplashScreen> {
                     /// TAGLINE
                     Text(
                       "Secure Your Future",
-                      style: AppTextStyles.body.copyWith(
-                        fontSize: 14,
-                      ),
+                      style: AppTextStyles.body.copyWith(fontSize: 14),
                     ),
 
                     const SizedBox(height: 30),
 
                     /// LOADER
-                     SizedBox(
+                    SizedBox(
                       width: 26,
                       height: 26,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation(
-                          AppColors.primary,
-                        ),
+                        valueColor: AlwaysStoppedAnimation(AppColors.primary),
                       ),
                     ),
 

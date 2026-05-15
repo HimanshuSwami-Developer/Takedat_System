@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "174664044431",
+    "project_id": "takedat-919ed",
+    "storage_bucket": "takedat-919ed.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:174664044431:android:c62a00dd8c6ee7df3685fa",
+        "android_client_info": {
+          "package_name": "com.example.takedat_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCtO8Uk47vIe4NJHM6UYR6HCK_pQ-OOr7c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

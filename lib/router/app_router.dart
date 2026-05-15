@@ -1,8 +1,12 @@
-
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:takedat_app/repository/auth_repo.dart';
+import 'package:takedat_app/repository/user_repo.dart';
 import 'package:takedat_app/router/my_routes.dart';
 import 'package:takedat_app/screens/attendance/ui/attendance_screen.dart';
+import 'package:takedat_app/screens/auth/login/bloc/auth_bloc.dart';
 import 'package:takedat_app/screens/auth/login/ui/login_screen.dart';
+import 'package:takedat_app/screens/auth/register/bloc/register_bloc.dart';
 import 'package:takedat_app/screens/auth/register/ui/register.dart';
 import 'package:takedat_app/screens/contractor/ui/contractor_screen.dart';
 import 'package:takedat_app/screens/employees/ui/employees_screen.dart';
@@ -19,25 +23,38 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const SplashScreen(),
     ),
     GoRoute(
-      path:MyRoutes.loginScreen,
-      builder: (context, state) => const LoginScreen(),
-    ),
-      GoRoute(
-      path:MyRoutes.registerScreen,
-      builder: (context, state) => const RegisterScreen(),
+      path: MyRoutes.loginScreen,
+
+      builder: (context, state) {
+        return BlocProvider(
+          create: (_) => AuthBloc(AuthRepository()),
+
+          child: const LoginScreen(),
+        );
+      },
     ),
     GoRoute(
-      path:MyRoutes.settingScreen,
+      path: MyRoutes.registerScreen,
+
+      builder: (context, state) {
+        return BlocProvider(
+          create: (_) => RegisterBloc(UserRepository()),
+
+          child: const RegisterScreen(),
+        );
+      },
+    ),
+    GoRoute(
+      path: MyRoutes.settingScreen,
       builder: (context, state) => const ManageStatusScreen(),
     ),
 
-     /// 🔥 MAIN APP WITH HEADER + BOTTOM NAV
+    /// 🔥 MAIN APP WITH HEADER + BOTTOM NAV
     ShellRoute(
       builder: (context, state, child) {
         return MainLayout(child: child);
       },
       routes: [
-
         GoRoute(
           path: MyRoutes.attendanceScreen,
           builder: (context, state) => const AttendanceScreen(),
