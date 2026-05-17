@@ -41,7 +41,7 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
   void _openSheet() {
     showModalBottomSheet(
       context: context,
-      useRootNavigator: true,
+      useRootNavigator: false,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (_) => _DropdownSheet<T>(

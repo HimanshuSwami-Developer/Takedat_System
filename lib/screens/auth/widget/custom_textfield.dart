@@ -3,7 +3,6 @@ import 'package:takedat_app/core/app_colors.dart';
 import 'package:takedat_app/core/app_text.dart';
 
 class CustomTextField extends StatefulWidget {
-
   final String label;
   final String hint;
   final IconData? icon;
@@ -11,8 +10,11 @@ class CustomTextField extends StatefulWidget {
   final bool isTextArea;
   final TextEditingController? controller;
 
-  /// NEW
+  /// KEYBOARD TYPE
   final TextInputType keyboardType;
+
+  /// ON CHANGE
+  final Function(String)? onChanged;
 
   const CustomTextField({
     super.key,
@@ -22,9 +24,8 @@ class CustomTextField extends StatefulWidget {
     this.isPassword = false,
     this.isTextArea = false,
     this.controller,
-
-    /// DEFAULT
     this.keyboardType = TextInputType.text,
+    this.onChanged,
   });
 
   @override
@@ -73,6 +74,9 @@ class _CustomTextFieldState
           child: TextField(
 
             controller: widget.controller,
+
+            /// ON CHANGED
+            onChanged: widget.onChanged,
 
             /// KEYBOARD TYPE
             keyboardType:

@@ -1,8 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:takedat_app/repository/attendance_repo.dart';
 import 'package:takedat_app/repository/auth_repo.dart';
 import 'package:takedat_app/repository/user_repo.dart';
 import 'package:takedat_app/router/my_routes.dart';
+import 'package:takedat_app/screens/attendance/bloc/attendance_bloc.dart';
+import 'package:takedat_app/screens/attendance/bloc/attendance_event.dart';
 import 'package:takedat_app/screens/attendance/ui/attendance_screen.dart';
 import 'package:takedat_app/screens/auth/login/bloc/auth_bloc.dart';
 import 'package:takedat_app/screens/auth/login/ui/login_screen.dart';
@@ -57,7 +60,10 @@ final GoRouter appRouter = GoRouter(
       routes: [
         GoRoute(
           path: MyRoutes.attendanceScreen,
-          builder: (context, state) => const AttendanceScreen(),
+          builder: (context, state) => BlocProvider(
+            create: (context) => AttendanceBloc(AttendanceRepository()),
+            child: AttendanceScreen(),
+          ),
         ),
 
         GoRoute(
