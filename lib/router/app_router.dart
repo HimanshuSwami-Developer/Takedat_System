@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:takedat_app/repository/attendance_repo.dart';
 import 'package:takedat_app/repository/auth_repo.dart';
+import 'package:takedat_app/repository/contractor_repo.dart';
 import 'package:takedat_app/repository/user_repo.dart';
 import 'package:takedat_app/router/my_routes.dart';
 import 'package:takedat_app/screens/attendance/bloc/attendance_bloc.dart';
@@ -11,6 +12,7 @@ import 'package:takedat_app/screens/auth/login/bloc/auth_bloc.dart';
 import 'package:takedat_app/screens/auth/login/ui/login_screen.dart';
 import 'package:takedat_app/screens/auth/register/bloc/register_bloc.dart';
 import 'package:takedat_app/screens/auth/register/ui/register.dart';
+import 'package:takedat_app/screens/contractor/bloc/contractor_bloc.dart';
 import 'package:takedat_app/screens/contractor/ui/contractor_screen.dart';
 import 'package:takedat_app/screens/employees/ui/employees_screen.dart';
 import 'package:takedat_app/screens/mainLayout/main_layout.dart';
@@ -78,7 +80,10 @@ final GoRouter appRouter = GoRouter(
 
         GoRoute(
           path: MyRoutes.contractorScreen,
-          builder: (context, state) => const ContractorScreen(),
+          builder: (context, state) => BlocProvider(
+            create: (_) => ContractorBloc(ContractorRepository()),
+            child: const ContractorScreen(),
+          ),
         ),
       ],
     ),
