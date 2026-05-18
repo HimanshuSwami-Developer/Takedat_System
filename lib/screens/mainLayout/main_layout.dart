@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:takedat_app/constant/session_keys.dart';
 import 'package:takedat_app/constant/session_manager.dart';
 import 'package:takedat_app/core/app_colors.dart';
 import 'package:takedat_app/router/my_routes.dart';
@@ -14,7 +15,11 @@ class MainLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDesktop = MediaQuery.of(context).size.width >= 900;
+    final role = SessionManager.getString(SessionKeys.role);
 
+    final fullName = SessionManager.getString(SessionKeys.fullName);
+
+    final empId = SessionManager.getString(SessionKeys.empId);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F5),
 
@@ -35,7 +40,13 @@ class MainLayout extends StatelessWidget {
                       PreferredSize(
                         preferredSize: const Size.fromHeight(60),
 
-                        child: _header(isDesktop, context),
+                        child: _header(
+                          isDesktop,
+                          fullName,
+                          empId,
+                          role,
+                          context,
+                        ),
                       ),
 
                       /// BODY
@@ -54,7 +65,7 @@ class MainLayout extends StatelessWidget {
                 PreferredSize(
                   preferredSize: const Size.fromHeight(90),
 
-                  child: _header(isDesktop, context),
+                  child: _header(isDesktop, fullName, empId, role, context),
                 ),
 
                 /// BODY
@@ -71,7 +82,13 @@ class MainLayout extends StatelessWidget {
   /// HEADER
   /// ============================
 
-  Widget _header(bool isDesktop, BuildContext context) {
+  Widget _header(
+    bool isDesktop,
+    String fullName,
+    String empId,
+    String role,
+    BuildContext context,
+  ) {
     return SafeArea(
       bottom: false,
       child: Container(
@@ -97,9 +114,28 @@ class MainLayout extends StatelessWidget {
 
             const SizedBox(width: 12),
 
-            const Text(
-              "Admin",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+
+              mainAxisAlignment: MainAxisAlignment.center,
+
+              children: [
+                Text(
+                  fullName,
+
+                  style: const TextStyle(
+                    fontSize: 12,
+
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+
+                Text(
+                  "Employee ID: $empId",
+
+                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                ),
+              ],
             ),
 
             const Spacer(),
@@ -135,12 +171,14 @@ class MainLayout extends StatelessWidget {
               child: const Icon(Icons.logout_rounded),
             ),
             const SizedBox(width: 12),
-            InkWell(
-              onTap: () {
-                context.push(MyRoutes.settingScreen);
-              },
-              child: Icon(Icons.settings),
-            ),
+            if (role == "admin") ...[
+              InkWell(
+                onTap: () {
+                  context.push(MyRoutes.settingScreen);
+                },
+                child: Icon(Icons.settings),
+              ),
+            ],
           ],
         ),
       ),
@@ -179,17 +217,18 @@ class MainLayout extends StatelessWidget {
             active: location == MyRoutes.attendanceScreen,
           ),
 
-          _navItem(
-            context,
+          if (SessionManager.getString(SessionKeys.role) == "admin")
+            _navItem(
+              context,
 
-            icon: Icons.people,
+              icon: Icons.people,
 
-            label: "Employees",
+              label: "Employees",
 
-            route: MyRoutes.employeeScreen,
+              route: MyRoutes.employeeScreen,
 
-            active: location == MyRoutes.employeeScreen,
-          ),
+              active: location == MyRoutes.employeeScreen,
+            ),
 
           _navItem(
             context,
@@ -203,17 +242,31 @@ class MainLayout extends StatelessWidget {
             active: location == MyRoutes.paymentScreen,
           ),
 
-          _navItem(
-            context,
+          if (SessionManager.getString(SessionKeys.role) == "admin")
+            _navItem(
+              context,
 
-            icon: Icons.work,
+              icon: Icons.work,
 
-            label: "Contractors",
+              label: "Contractors",
 
-            route: MyRoutes.contractorScreen,
+              route: MyRoutes.contractorScreen,
 
-            active: location == MyRoutes.contractorScreen,
-          ),
+              active: location == MyRoutes.contractorScreen,
+            ),
+
+          if (SessionManager.getString(SessionKeys.role) == "user")
+            _navItem(
+              context,
+
+              icon: Icons.work,
+
+              label: "Profile",
+
+              route: MyRoutes.profileScreen,
+
+              active: location == MyRoutes.profileScreen,
+            ),
         ],
       ),
     );
@@ -272,17 +325,18 @@ class MainLayout extends StatelessWidget {
             active: location == MyRoutes.attendanceScreen,
           ),
 
-          _sideItem(
-            context,
+          if (SessionManager.getString(SessionKeys.role) == "admin")
+            _sideItem(
+              context,
 
-            icon: Icons.people,
+              icon: Icons.people,
 
-            label: "Employees",
+              label: "Employees",
 
-            route: MyRoutes.employeeScreen,
+              route: MyRoutes.employeeScreen,
 
-            active: location == MyRoutes.employeeScreen,
-          ),
+              active: location == MyRoutes.employeeScreen,
+            ),
 
           _sideItem(
             context,
@@ -296,17 +350,34 @@ class MainLayout extends StatelessWidget {
             active: location == MyRoutes.paymentScreen,
           ),
 
-          _sideItem(
-            context,
+          if (SessionManager.getString(SessionKeys.role) == "admin")
+            _sideItem(
+              context,
 
-            icon: Icons.work,
+              icon: Icons.work,
 
-            label: "Contractors",
+              label: "Contractors",
 
-            route: MyRoutes.contractorScreen,
+              route: MyRoutes.contractorScreen,
 
-            active: location == MyRoutes.contractorScreen,
-          ),
+              active: location == MyRoutes.contractorScreen,
+            ),
+
+
+          if (SessionManager.getString(SessionKeys.role) == "user")
+            _sideItem(
+              context,
+
+              icon: Icons.work,
+
+              label: "Profile",
+
+              route: MyRoutes.profileScreen,
+
+              active: location == MyRoutes.profileScreen,
+            ),
+
+
         ],
       ),
     );

@@ -27,7 +27,7 @@ dependencies:
   universal_html: ^2.3.0
   image: ^4.8.0
   pdf: ^3.10.8
-  archive: ^3.6.1
+  archive: ^4.0.9
   printing: ^5.12.0
   
 

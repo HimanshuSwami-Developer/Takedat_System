@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:takedat_app/constant/session_keys.dart';
+import 'package:takedat_app/constant/session_manager.dart';
 import 'package:takedat_app/core/app_colors.dart';
 
 import 'package:takedat_app/core/app_text.dart';
@@ -64,6 +66,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     });
   }
 
+  final role =
+    SessionManager.getString(
+      SessionKeys.role,
+    );
+
   @override
   void dispose() {
     scrollController.dispose();
@@ -75,7 +82,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F5),
-
+     floatingActionButton: role != "admin"
+          ? SizedBox(
+            width: 100,
+            child: CustomButton( 
+                              text: "Export",
+                      
+                              icon: Icons.download,
+                      
+                              isFullWidth: false,
+                      
+                              onTap: () async {
+                                await attendanceRepository.exportAttendanceCsv();
+                              },
+                            ),
+          ): null,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
 
@@ -137,119 +158,123 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 12),
-
-                Container(
-                  width: double.infinity,
-                  child: CustomTextField(
-                    onChanged: (value) {
-                      if (_debounce?.isActive ?? false) {
-                        _debounce!.cancel();
-                      }
-
-                      _debounce = Timer(const Duration(milliseconds: 500), () {
-                        context.read<AttendanceBloc>().add(
-                          SearchAttendanceEvent(value),
-                        );
-                      });
-                    },
-                    label: "",
-                    hint: "Search employee or ID or number or email",
-                    icon: Icons.search,
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                /// =================================
-                /// ACTION BUTTONS
-                /// =================================
-                Row(
+                if (role == "admin") Column(
                   children: [
-                    Expanded(
-                      child: CustomButton(
-                        text: "Export",
-
-                        icon: Icons.download,
-
-                        isFullWidth: false,
-
-                        onTap: () async {
-                          await attendanceRepository.exportAttendanceCsv();
+                    const SizedBox(height: 12),
+                    
+                    Container(
+                      width: double.infinity,
+                      child: CustomTextField(
+                        onChanged: (value) {
+                          if (_debounce?.isActive ?? false) {
+                            _debounce!.cancel();
+                          }
+                    
+                          _debounce = Timer(const Duration(milliseconds: 500), () {
+                            context.read<AttendanceBloc>().add(
+                              SearchAttendanceEvent(value),
+                            );
+                          });
                         },
+                        label: "",
+                        hint: "Search employee or ID or number or email",
+                        icon: Icons.search,
                       ),
                     ),
-
-                    const SizedBox(width: 8),
-
-                    /// =========================
-                    /// CREATE ATTENDANCE
-                    /// =========================
-                    Expanded(
-                      child: CustomButton(
-                        text: "Create",
-
-                        icon: Icons.add,
-
-                        isFullWidth: false,
-
-                        onTap: () {
-                          showModalBottomSheet(
-                            context: context,
-
-                            isScrollControlled: true,
-
-                            backgroundColor: Colors.transparent,
-
-                            builder: (_) {
-                              return BlocProvider.value(
-                                value: context.read<AttendanceBloc>(),
-                                child: AddAttendanceShiftSheet(
-                                  shifts: shifts,
-                                  onSave: (data) {
-                                    final model = AttendanceModel.fromLocalMap(
-                                      data,
-                                    );
-                                    context.read<AttendanceBloc>().add(
-                                      SaveAttendanceEvent(model),
-                                    );
-                                  },
-                                ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    /// =================================
+                    /// ACTION BUTTONS
+                    /// =================================
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CustomButton(
+                            text: "Export",
+                    
+                            icon: Icons.download,
+                    
+                            isFullWidth: false,
+                    
+                            onTap: () async {
+                              await attendanceRepository.exportAttendanceCsv();
+                            },
+                          ),
+                        ),
+                    
+                        const SizedBox(width: 8),
+                    
+                        /// =========================
+                        /// CREATE ATTENDANCE
+                        /// =========================
+                        Expanded(
+                          child: CustomButton(
+                            text: "Create",
+                    
+                            icon: Icons.add,
+                    
+                            isFullWidth: false,
+                    
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                    
+                                isScrollControlled: true,
+                    
+                                backgroundColor: Colors.transparent,
+                    
+                                builder: (_) {
+                                  return BlocProvider.value(
+                                    value: context.read<AttendanceBloc>(),
+                                    child: AddAttendanceShiftSheet(
+                                      shifts: shifts,
+                                      onSave: (data) {
+                                        final model = AttendanceModel.fromLocalMap(
+                                          data,
+                                        );
+                                        context.read<AttendanceBloc>().add(
+                                          SaveAttendanceEvent(model),
+                                        );
+                                      },
+                                    ),
+                                  );
+                                },
                               );
                             },
-                          );
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    /// =========================
-                    /// MANAGE SHIFT
-                    /// =========================
-                    Expanded(
-                      child: CustomButton(
-                        text: "Add Shift",
-
-                        icon: Icons.schedule,
-
-                        onTap: () {
-                          showModalBottomSheet(
-                            context: context,
-
-                            isScrollControlled: true,
-
-                            backgroundColor: Colors.transparent,
-
-                            builder: (_) {
-                              return BlocProvider.value(
-                                value: context.read<AttendanceBloc>(),
-                                child: ManageShiftSheet(shifts: shifts),
+                          ),
+                        ),
+                    
+                        const SizedBox(width: 8),
+                    
+                        /// =========================
+                        /// MANAGE SHIFT
+                        /// =========================
+                        Expanded(
+                          child: CustomButton(
+                            text: "Add Shift",
+                    
+                            icon: Icons.schedule,
+                    
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                    
+                                isScrollControlled: true,
+                    
+                                backgroundColor: Colors.transparent,
+                    
+                                builder: (_) {
+                                  return BlocProvider.value(
+                                    value: context.read<AttendanceBloc>(),
+                                    child: ManageShiftSheet(shifts: shifts),
+                                  );
+                                },
                               );
                             },
-                          );
-                        },
-                      ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -314,6 +339,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                 return AttendanceCard(
                                   item: data,
                                   shifts: shifts,
+                                  isAdmin: role == "admin",
                                   onDelete: () => context
                                       .read<AttendanceBloc>()
                                       .add(DeleteAttendanceEvent(item.id ?? 0)),

@@ -4,26 +4,19 @@ import 'package:takedat_app/core/app_colors.dart';
 import 'package:takedat_app/core/app_text.dart';
 
 class AppUtils {
+  static String getInitials(String name) {
+    final parts = name.trim().split(' ').where((e) => e.isNotEmpty).toList();
 
-static String getInitials(String name) {
-  final parts = name
-      .trim()
-      .split(' ')
-      .where((e) => e.isNotEmpty)
-      .toList();
+    if (parts.isEmpty) return '?';
 
-  if (parts.isEmpty) return '?';
+    if (parts.length == 1) {
+      return parts[0][0].toUpperCase();
+    }
 
-  if (parts.length == 1) {
-    return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
-  return (
-    parts[0][0] + parts[1][0]
-  ).toUpperCase();
-}
-
-static String format(
+  static String format(
     String dateTime, {
     String pattern = 'dd MMM yyyy h:mm a',
   }) {
@@ -35,8 +28,7 @@ static String format(
     }
   }
 
-
-static Future<bool?> show({
+  static Future<bool?> show({
     required BuildContext context,
 
     required String title,
@@ -57,14 +49,10 @@ static Future<bool?> show({
       barrierDismissible: false,
 
       builder: (ctx) {
-
         return Dialog(
           backgroundColor: Colors.transparent,
 
-          insetPadding:
-              const EdgeInsets.symmetric(
-            horizontal: 24,
-          ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
 
           child: Container(
             width: 420,
@@ -74,13 +62,11 @@ static Future<bool?> show({
             decoration: BoxDecoration(
               color: Colors.white,
 
-              borderRadius:
-                  BorderRadius.circular(26),
+              borderRadius: BorderRadius.circular(26),
 
               boxShadow: [
                 BoxShadow(
-                  color:
-                      Colors.black.withOpacity(.08),
+                  color: Colors.black.withOpacity(.08),
 
                   blurRadius: 30,
 
@@ -93,26 +79,18 @@ static Future<bool?> show({
               mainAxisSize: MainAxisSize.min,
 
               children: [
-
                 /// ICON
                 Container(
                   height: 74,
                   width: 74,
 
                   decoration: BoxDecoration(
-                    color:
-                        confirmColor.withOpacity(.1),
+                    color: confirmColor.withOpacity(.1),
 
                     shape: BoxShape.circle,
                   ),
 
-                  child: Icon(
-                    icon,
-
-                    color: confirmColor,
-
-                    size: 38,
-                  ),
+                  child: Icon(icon, color: confirmColor, size: 38),
                 ),
 
                 const SizedBox(height: 20),
@@ -151,37 +129,21 @@ static Future<bool?> show({
                 /// BUTTONS
                 Row(
                   children: [
-
                     /// CANCEL
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () {
-                          Navigator.pop(
-                            ctx,
-                            false,
-                          );
+                          Navigator.pop(ctx, false);
                         },
 
-                        style:
-                            OutlinedButton.styleFrom(
-                          minimumSize:
-                              const Size(
-                            double.infinity,
-                            50,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 50),
+
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
                           ),
 
-                          shape:
-                              RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(
-                              14,
-                            ),
-                          ),
-
-                          side: BorderSide(
-                            color:
-                                Colors.grey.shade300,
-                          ),
+                          side: BorderSide(color: Colors.grey.shade300),
                         ),
 
                         child: Text(
@@ -189,8 +151,7 @@ static Future<bool?> show({
 
                           style: const TextStyle(
                             color: Colors.black87,
-                            fontWeight:
-                                FontWeight.w600,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -202,31 +163,18 @@ static Future<bool?> show({
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.pop(
-                            ctx,
-                            true,
-                          );
+                          Navigator.pop(ctx, true);
                         },
 
-                        style:
-                            ElevatedButton.styleFrom(
+                        style: ElevatedButton.styleFrom(
                           elevation: 0,
 
-                          backgroundColor:
-                              confirmColor,
+                          backgroundColor: confirmColor,
 
-                          minimumSize:
-                              const Size(
-                            double.infinity,
-                            50,
-                          ),
+                          minimumSize: const Size(double.infinity, 50),
 
-                          shape:
-                              RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(
-                              14,
-                            ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
 
@@ -235,8 +183,7 @@ static Future<bool?> show({
 
                           style: const TextStyle(
                             color: Colors.white,
-                            fontWeight:
-                                FontWeight.w600,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -250,8 +197,6 @@ static Future<bool?> show({
       },
     );
   }
-
-
 
   static Future<void> showDialogMessage(
     BuildContext context, {
@@ -374,9 +319,13 @@ static Future<bool?> show({
 
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context);
+                      if (Navigator.canPop(context)) {
+                        Navigator.of(context, rootNavigator: true).pop();
+                      }
 
-                      onTap?.call();
+                      Future.delayed(const Duration(milliseconds: 150), () {
+                        onTap?.call();
+                      });
                     },
 
                     style: ElevatedButton.styleFrom(

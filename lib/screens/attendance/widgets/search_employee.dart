@@ -134,7 +134,7 @@ class _EmployeeSearchFieldState extends State<EmployeeSearchField> {
     _overlayEntry = OverlayEntry(
       builder: (ctx) {
         return Positioned(
-          width: MediaQuery.of(context).size.width*0.9,
+          width: 300,
           child: CompositedTransformFollower(
             link: _layerLink,
             showWhenUnlinked: false,

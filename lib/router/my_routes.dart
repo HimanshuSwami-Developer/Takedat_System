@@ -15,4 +15,6 @@ class MyRoutes {
   static const String contractorScreen = "/contractor";
 
   static const String employeeScreen = "/employees";
+
+  static const String profileScreen = "/profile";
 }

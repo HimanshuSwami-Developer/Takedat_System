@@ -5,6 +5,7 @@ import 'package:takedat_app/repository/auth_repo.dart';
 import 'package:takedat_app/repository/contractor_repo.dart';
 import 'package:takedat_app/repository/employee_compliance_repo.dart';
 import 'package:takedat_app/repository/payment_repo.dart';
+import 'package:takedat_app/repository/profile_repo.dart';
 import 'package:takedat_app/repository/user_repo.dart';
 import 'package:takedat_app/router/my_routes.dart';
 import 'package:takedat_app/screens/attendance/bloc/attendance_bloc.dart';
@@ -21,6 +22,8 @@ import 'package:takedat_app/screens/employees/ui/employees_screen.dart';
 import 'package:takedat_app/screens/mainLayout/main_layout.dart';
 import 'package:takedat_app/screens/payment/bloc/payment_bloc.dart';
 import 'package:takedat_app/screens/payment/ui/payment_screen.dart';
+import 'package:takedat_app/screens/profile/bloc/profile_bloc.dart';
+import 'package:takedat_app/screens/profile/ui/profile_screen.dart';
 import 'package:takedat_app/screens/settings/bloc/settings_bloc.dart';
 import 'package:takedat_app/screens/settings/setting.dart';
 import 'package:takedat_app/splash_screen.dart';
@@ -79,7 +82,8 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: MyRoutes.employeeScreen,
           builder: (context, state) => BlocProvider(
-            create: (context) => EmployeeComplianceBloc(EmployeeComplianceRepository()),
+            create: (context) =>
+                EmployeeComplianceBloc(EmployeeComplianceRepository()),
             child: const EmployeeComplianceScreen(),
           ),
         ),
@@ -98,6 +102,13 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => BlocProvider(
             create: (_) => ContractorBloc(ContractorRepository()),
             child: const ContractorScreen(),
+          ),
+        ),
+        GoRoute(
+          path: MyRoutes.profileScreen,
+          builder: (context, state) => BlocProvider(
+            create: (context) => ProfileBloc(profileRepository: ProfileRepository(), userRepository: UserRepository()),
+            child: const ProfileScreen(),
           ),
         ),
       ],

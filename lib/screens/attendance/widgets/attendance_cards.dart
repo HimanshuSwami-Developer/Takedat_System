@@ -6,7 +6,7 @@ import 'package:takedat_app/screens/attendance/widgets/manage_attendance.dart';
 class AttendanceCard extends StatefulWidget {
   final Map<String, dynamic> item;
   final List<ShiftModel> shifts;
-
+ final bool isAdmin;
   /// Called after user confirms delete — pass the attendance id up
   final VoidCallback? onDelete;
 
@@ -19,6 +19,7 @@ class AttendanceCard extends StatefulWidget {
     required this.shifts,
     this.onDelete,
     this.onUpdate,
+    required this.isAdmin,
   });
 
   @override
@@ -292,7 +293,7 @@ class _AttendanceCardState extends State<AttendanceCard> {
                       ),
 
                       // ── Action buttons ──────────────────────
-                      Row(
+                      if(widget.isAdmin)Row(
                         children: [
                           GestureDetector(
                             onTap: _openEdit,

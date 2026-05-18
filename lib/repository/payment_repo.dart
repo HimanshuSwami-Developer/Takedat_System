@@ -20,163 +20,169 @@ class PaymentTrackRepository {
     String search = '',
   }) async {
     final from = page * limit;
+
     final to = from + limit - 1;
 
-    /// =====================================================
-    /// BUILD QUERY
-    /// NOTE: Supabase does NOT support filtering on
-    /// related table columns via .or() directly —
-    /// use textSearch or filter after fetch for relations.
-    /// =====================================================
+    dynamic query = supabase.from('attendance').select('''
+        id,
+        user_id,
+        mode,
+        shift_start,
+        shift_end,
+        status,
+        shift_id,
+        created_at,
+        updated_at,
 
-    final response = await supabase
-        .from('attendance')
-        .select('''
+        users!inner(
           id,
+          full_name,
+          email,
+          emp_id,
+          phone,
+          role,
+          address,
+          is_active
+        ),
+
+        payment_track(
+          payment_id,
           user_id,
-          mode,
-          shift_start,
-          shift_end,
-          status,
-          shift_id,
+          attendance_id,
+          cash_payment,
+          ni_payment,
+          expense,
+          payment_status,
           created_at,
-          updated_at,
+          updated_at
+        )
+      ''');
 
-          users:user_id (
-            id,
-            full_name,
-            email,
-            emp_id,
-            phone,
-            role,
-            address,
-            is_active
-          ),
+    /// =========================================
+    /// SEARCH FROM DATABASE
+    /// =========================================
 
-          payment_track (
-            payment_id,
-            user_id,
-            attendance_id,
-            cash_payment,
-            ni_payment,
-            expense,
-            payment_status,
-            created_at,
-            updated_at
-          )
-        ''')
+    if (search.trim().isNotEmpty) {
+      final q = search.trim();
+
+      query = query.or(
+        'full_name.ilike.%$q%,'
+        'email.ilike.%$q%,'
+        'emp_id.ilike.%$q%,'
+        'phone.ilike.%$q%',
+
+        referencedTable: 'users',
+      );
+    }
+
+    /// =========================================
+    /// EXECUTE
+    /// =========================================
+
+    final response = await query
         .order('created_at', ascending: false)
         .range(from, to);
 
-    /// =====================================================
-    /// CLIENT-SIDE SEARCH (safe for related fields)
-    /// =====================================================
-
-    List<dynamic> filtered = response;
-
-    if (search.isNotEmpty) {
-      final q = search.toLowerCase();
-      filtered = response.where((item) {
-        final users = item['users'] as Map<String, dynamic>?;
-        if (users == null) return false;
-        final name = (users['full_name'] ?? '').toString().toLowerCase();
-        final empId = (users['emp_id'] ?? '').toString().toLowerCase();
-        final email = (users['email'] ?? '').toString().toLowerCase();
-        final phone = (users['phone'] ?? '').toString().toLowerCase();
-        return name.contains(q) ||
-            empId.contains(q) ||
-            email.contains(q) ||
-            phone.contains(q);
-      }).toList();
-    }
-
-    /// =====================================================
-    /// MAP TO MODELS
-    /// =====================================================
-
     final List<PaymentTrackModel> payments = [];
 
-    for (final item in filtered) {
+    for (final item in response) {
       try {
         final userMap = item['users'] as Map<String, dynamic>?;
+
         final paymentList = item['payment_track'] as List?;
 
-        /// Parse shift dates safely
         final shiftStart = _parseDate(item['shift_start']);
+
         final shiftEnd = _parseDate(item['shift_end']);
 
-        if (shiftStart == null || shiftEnd == null) continue;
+        if (shiftStart == null || shiftEnd == null) {
+          continue;
+        }
 
-        /// =================================================
-        /// ATTENDANCE MODEL
-        /// =================================================
-
+        /// ATTENDANCE
         final attendance = AttendanceModel.fromJson({
           'id': item['id'],
+
           'user_id': item['user_id'] ?? '',
+
           'mode': item['mode'] ?? '',
+
           'shift_start': shiftStart.toIso8601String(),
+
           'shift_end': shiftEnd.toIso8601String(),
+
           'status': item['status'] ?? '',
+
           'shift_id': item['shift_id'],
+
           'created_at': item['created_at'],
+
           'updated_at': item['updated_at'],
+
           'users': userMap,
         });
 
-        /// =================================================
-        /// USER MODEL (null-safe)
-        /// =================================================
-
+        /// USER
         final user = userMap != null ? _parseUser(userMap) : null;
 
-        /// =================================================
         /// PAYMENT EXISTS
-        /// =================================================
-
         if (paymentList != null && paymentList.isNotEmpty) {
           final p = paymentList.first as Map<String, dynamic>;
 
           payments.add(
             PaymentTrackModel(
               paymentId: p['payment_id'] as int?,
+
               userId: (p['user_id'] ?? item['user_id'] ?? '') as String,
+
               attendanceId: (p['attendance_id'] ?? attendance.id ?? 0) as int,
+
               cashPayment: _toDouble(p['cash_payment']),
+
               niPayment: _toDouble(p['ni_payment']),
+
               expense: _toDouble(p['expense']),
+
               paymentStatus: (p['payment_status'] ?? 'pending') as String,
+
               createdAt: _parseDate(p['created_at']),
+
               updatedAt: _parseDate(p['updated_at']),
+
               user: user,
+
               attendance: attendance,
             ),
           );
         }
-
-        /// =================================================
-        /// PAYMENT NOT EXISTS — default values
-        /// =================================================
-
+        /// DEFAULT PAYMENT
         else {
           payments.add(
             PaymentTrackModel(
               paymentId: null,
+
               userId: (item['user_id'] ?? '') as String,
+
               attendanceId: attendance.id ?? 0,
+
               cashPayment: 0,
+
               niPayment: 0,
+
               expense: 0,
+
               paymentStatus: 'pending',
+
               user: user,
+
               attendance: attendance,
             ),
           );
         }
-      } catch (e, stack) {
-        // Skip malformed rows — log in debug
+      } catch (e) {
         assert(() {
-          print('[PaymentTrackRepository] skipped row: $e\n$stack');
+          print('[PaymentRepo] $e');
+
           return true;
         }());
       }
