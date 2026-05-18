@@ -144,6 +144,8 @@ class _ContractorCardState extends State<ContractorCard> {
                               backgroundColor: Colors.transparent,
                               insetPadding: const EdgeInsets.all(20),
                               child: Container(
+                                width: 400,
+                                height: 500,
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: Colors.white,

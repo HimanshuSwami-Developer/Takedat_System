@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:takedat_app/repository/attendance_repo.dart';
 import 'package:takedat_app/repository/auth_repo.dart';
 import 'package:takedat_app/repository/contractor_repo.dart';
+import 'package:takedat_app/repository/payment_repo.dart';
 import 'package:takedat_app/repository/user_repo.dart';
 import 'package:takedat_app/router/my_routes.dart';
 import 'package:takedat_app/screens/attendance/bloc/attendance_bloc.dart';
@@ -16,6 +17,7 @@ import 'package:takedat_app/screens/contractor/bloc/contractor_bloc.dart';
 import 'package:takedat_app/screens/contractor/ui/contractor_screen.dart';
 import 'package:takedat_app/screens/employees/ui/employees_screen.dart';
 import 'package:takedat_app/screens/mainLayout/main_layout.dart';
+import 'package:takedat_app/screens/payment/bloc/payment_bloc.dart';
 import 'package:takedat_app/screens/payment/ui/payment_screen.dart';
 import 'package:takedat_app/screens/settings/bloc/settings_bloc.dart';
 import 'package:takedat_app/screens/settings/setting.dart';
@@ -79,7 +81,10 @@ final GoRouter appRouter = GoRouter(
 
         GoRoute(
           path: MyRoutes.paymentScreen,
-          builder: (context, state) => const PaymentScreen(),
+          builder: (context, state) => BlocProvider(
+            create: (context) => PaymentBloc(repository: PaymentTrackRepository()),
+            child: PaymentScreen(),
+          ),
         ),
 
         GoRoute(
