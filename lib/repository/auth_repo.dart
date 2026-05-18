@@ -11,37 +11,59 @@ class AuthRepository {
   /// ADMIN LOGIN WITH PASSWORD
   /// =========================
 
-  Future<UserModel> adminLogin({
-    required String email,
-    required String password,
-  }) async {
-    /// LOGIN
-    final response = await supabase.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+Future<UserModel> adminLogin({
+  required String email,
+  required String password,
+}) async {
 
-    if (response.user == null) {
-      throw Exception("Invalid email or password");
-    }
+  /// LOGIN
+  final response = await supabase.auth.signInWithPassword(
+    email: email,
+    password: password,
+  );
 
-    /// GET USER FROM SUPABASE TABLE
-    final data = await supabase
-        .from('users')
-        .select()
-        .eq('email', email)
-        .single();
-
-    final user = UserModel.fromMap(data);
-
-    if (user.role != "admin") {
-      throw Exception("Only admin can login");
-    }
-
-    await saveSession(user);
-
-    return user;
+  if (response.user == null) {
+    throw Exception("Invalid email or password");
   }
+
+  /// GET USER FROM TABLE
+  final data = await supabase
+      .from('users')
+      .select()
+      .eq('email', email)
+      .maybeSingle();
+
+  /// NO USER FOUND
+  if (data == null) {
+    await supabase.auth.signOut();
+
+    throw Exception("User profile not found");
+  }
+
+  final user = UserModel.fromMap(data);
+
+  /// INACTIVE USER
+  if (!user.isActive) {
+    await supabase.auth.signOut();
+
+    throw Exception(
+      "Your account is inactive. Contact admin.",
+    );
+  }
+
+  /// ROLE CHECK
+  if (user.role.toLowerCase() != "admin") {
+    await supabase.auth.signOut();
+
+    throw Exception("Only admin can login");
+  }
+
+  /// SAVE SESSION
+  await saveSession(user);
+
+  return user;
+}
+
 
   /// =========================
   /// SEND EMAIL OTP
@@ -59,6 +81,7 @@ class AuthRepository {
     final userData = await supabase
         .from('users')
         .select()
+        .eq('is_active', true)
         .eq('email', email)
         .maybeSingle();
 
@@ -102,6 +125,7 @@ class AuthRepository {
     final data = await supabase
         .from('users')
         .select()
+        .eq('is_active', true)
         .eq('email', email)
         .single();
 

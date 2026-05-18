@@ -40,6 +40,7 @@ class _AttendanceCardState extends State<AttendanceCard> {
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.symmetric(horizontal: 28),
           child: Container(
+            width: 400,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: Colors.white,

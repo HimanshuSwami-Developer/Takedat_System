@@ -312,4 +312,66 @@ class UserRepository {
 
     return SignedDocumentsModel.fromJson(response);
   }
+
+
+
+// ======================================================
+  /// Manage Status 
+  /// ======================================================
+
+ /// ======================================================
+/// GET USERS
+/// ======================================================
+Future<List<UserModel>> getUsers({
+  int page = 0,
+  int limit = 20,
+  String search = '',
+}) async {
+
+  final from = page * limit;
+
+  final to = from + limit - 1;
+
+  PostgrestFilterBuilder query = supabase
+      .from('users')
+      .select();
+
+  if (search.isNotEmpty) {
+    query = query.or(
+      'full_name.ilike.%$search%,'
+      'email.ilike.%$search%,'
+      'phone.ilike.%$search%,'
+      'emp_id.ilike.%$search%',
+    );
+  }
+
+  final response = await query
+      .order('created_at', ascending: false)
+      .range(from, to);
+
+  return (response as List)
+      .map((e) => UserModel.fromMap(e))
+      .toList();
+}
+
+/// ======================================================
+/// UPDATE STATUS
+/// ======================================================
+
+Future<UserModel> updateUserStatus({
+  required String userId,
+  required bool isActive,
+}) async {
+  final response = await supabase
+      .from('users')
+      .update({
+        'is_active': isActive,
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+  return UserModel.fromMap(response);
+}
+
 }

@@ -17,6 +17,7 @@ import 'package:takedat_app/screens/contractor/ui/contractor_screen.dart';
 import 'package:takedat_app/screens/employees/ui/employees_screen.dart';
 import 'package:takedat_app/screens/mainLayout/main_layout.dart';
 import 'package:takedat_app/screens/payment/ui/payment_screen.dart';
+import 'package:takedat_app/screens/settings/bloc/settings_bloc.dart';
 import 'package:takedat_app/screens/settings/setting.dart';
 import 'package:takedat_app/splash_screen.dart';
 
@@ -51,7 +52,10 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: MyRoutes.settingScreen,
-      builder: (context, state) => const ManageStatusScreen(),
+      builder: (context, state) => BlocProvider(
+        create: (context) => ManageStatusBloc(UserRepository()),
+        child: ManageStatusScreen(),
+      ),
     ),
 
     /// 🔥 MAIN APP WITH HEADER + BOTTOM NAV

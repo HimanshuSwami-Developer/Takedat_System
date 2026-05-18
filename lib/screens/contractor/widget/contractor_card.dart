@@ -6,6 +6,7 @@ import 'package:takedat_app/core/app_colors.dart';
 import 'package:takedat_app/core/app_text.dart';
 import 'package:takedat_app/models/contractor_model.dart';
 import 'package:takedat_app/screens/auth/widget/custom_button.dart';
+import 'package:takedat_app/utils/app_toast.dart';
 
 class ContractorCard extends StatefulWidget {
   final ContractorModel contractor;
@@ -165,7 +166,7 @@ class _ContractorCardState extends State<ContractorCard> {
                                         ),
 
                                         IconButton(
-                                          onPressed: () =>context.canPop()
+                                          onPressed: () => context.canPop()
                                               ? context.pop()
                                               : Navigator.of(context).pop(),
                                           icon: const Icon(Icons.close),
@@ -248,7 +249,14 @@ class _ContractorCardState extends State<ContractorCard> {
             ),
           ),
           GestureDetector(
-            onTap: () => Clipboard.setData(ClipboardData(text: value)),
+            onTap: () async {
+              await Clipboard.setData(ClipboardData(text: value));
+
+              if (!context.mounted) return;
+
+               AppToast.success(context, "$value copied");
+              
+            },
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(

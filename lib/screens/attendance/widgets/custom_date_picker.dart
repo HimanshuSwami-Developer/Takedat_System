@@ -172,9 +172,9 @@ class _CustomDateFieldState extends State<CustomDateField> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 7,
-                      mainAxisSpacing: 4,
-                      crossAxisSpacing: 4,
-                      childAspectRatio: 1,
+                      mainAxisSpacing: 3,
+                      crossAxisSpacing: 3,
+                      childAspectRatio: 2,
                     ),
                     itemBuilder: (_, index) {
                       if (index < offset) return const SizedBox.shrink();

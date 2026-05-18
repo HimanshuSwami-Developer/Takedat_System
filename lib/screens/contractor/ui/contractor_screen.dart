@@ -195,9 +195,7 @@ class _ContractorScreenState extends State<ContractorScreen> {
                                     contractor: contractor,
                                     onEdit: () =>
                                         _openEditSheet(context, contractor),
-                                    onDelete: () => _bloc.add(
-                                      DeleteContractorEvent(contractor.id!),
-                                    ),
+                                   onDelete: () => _confirmDelete(contractor),
                                   ),
                                 ),
                                 if (state is ContractorLoaded && state.hasMore)
@@ -236,6 +234,161 @@ class _ContractorScreenState extends State<ContractorScreen> {
         ),
       ),
     );
+  }
+
+  /// ─────────────────────────────────────
+  /// DELETE CONFIRMATION
+  /// ─────────────────────────────────────
+  Future<void> _confirmDelete(contractor) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+
+      barrierDismissible: false,
+
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+
+          insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+
+          child: Container(
+            width: 400,
+
+            padding: const EdgeInsets.all(24),
+
+            decoration: BoxDecoration(
+              color: Colors.white,
+
+              borderRadius: BorderRadius.circular(24),
+
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+
+              children: [
+                /// ICON
+                Container(
+                  height: 72,
+                  width: 72,
+
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+
+                  child: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Colors.red,
+                    size: 36,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                /// TITLE
+                Text(
+                  "Delete Contractor?",
+
+                  style: AppTextStyles.headline.copyWith(
+                    color: Colors.black,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                /// MESSAGE
+                Text(
+                  "Are you sure you want to delete ${contractor.name}? This action cannot be undone.",
+
+                  textAlign: TextAlign.center,
+
+                  style: AppTextStyles.label.copyWith(
+                    color: Colors.black54,
+                    height: 1.5,
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                /// BUTTONS
+                Row(
+                  children: [
+                    /// CANCEL
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 48),
+
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+
+                          side: BorderSide(color: Colors.grey.shade300),
+                        ),
+
+                        child: Text(
+                          "Cancel",
+
+                          style: AppTextStyles.label.copyWith(
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    /// DELETE
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0,
+
+                          backgroundColor: Colors.red,
+
+                          minimumSize: const Size(double.infinity, 48),
+
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+
+                        child: Text(
+                          "Delete",
+
+                          style: AppTextStyles.label.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      _bloc.add(DeleteContractorEvent(contractor.id!));
+    }
   }
 
   /// ─────────────────────────────────────
@@ -349,6 +502,7 @@ class _ContractorScreenState extends State<ContractorScreen> {
                     label: "Date Of Pay",
                     hint: "Select Pay Date",
                     icon: Icons.calendar_today,
+                     initialDate: tempDate,
                     onDateSelected: (date) {
                       setSheetState(() => tempDate = date);
                     },

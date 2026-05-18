@@ -1,84 +1,20 @@
+/// ======================================================
+/// MANAGE STATUS SCREEN
+/// ======================================================
+
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+
+import 'package:takedat_app/models/users_model.dart';
 import 'package:takedat_app/router/my_routes.dart';
 
-/// =======================================
-/// MODEL
-/// =======================================
-
-class EmployeeModel {
-  final String name;
-  final String empId;
-  final String email;
-  final String phone;
-  final String address;
-  final String image;
-  bool isActive;
-
-  EmployeeModel({
-    required this.name,
-    required this.empId,
-    required this.email,
-    required this.phone,
-    required this.address,
-    required this.image,
-    required this.isActive,
-  });
-}
-
-/// =======================================
-/// DUMMY DATA
-/// =======================================
-
-final List<EmployeeModel> employeeList = [
-  EmployeeModel(
-    name: "Marcus Richardson",
-    empId: "EMP-9010",
-    email: "m.richardson@corp.com",
-    phone: "+1 (555) 123-4567",
-    address: "422 Oakwood Dr, Ste 100, San Francisco, CA",
-    image:
-        "https://randomuser.me/api/portraits/men/32.jpg",
-    isActive: true,
-  ),
-
-  EmployeeModel(
-    name: "Elena Vance",
-    empId: "EMP-88421",
-    email: "e.vance@workforce.com",
-    phone: "+1 (555) 987-6543",
-    address: "1992 Lincoln Ave, Apt 4C, Austin, TX",
-    image:
-        "https://randomuser.me/api/portraits/women/44.jpg",
-    isActive: true,
-  ),
-
-  EmployeeModel(
-    name: "David Miller",
-    empId: "EMP-77102",
-    email: "d.miller@inactive.com",
-    phone: "+1 (555) 222-3333",
-    address: "78 North St, Denver, CO",
-    image:
-        "https://randomuser.me/api/portraits/men/55.jpg",
-    isActive: false,
-  ),
-
-  EmployeeModel(
-    name: "Sarah Jenkins",
-    empId: "EMP-88450",
-    email: "s.jenkins@corp.com",
-    phone: "+1 (555) 444-5555",
-    address: "33 Birch Lane, Seattle, WA",
-    image:
-        "https://randomuser.me/api/portraits/women/68.jpg",
-    isActive: true,
-  ),
-];
-
-/// =======================================
-/// SCREEN
-/// =======================================
+import 'package:takedat_app/screens/auth/widget/custom_textfield.dart';
+import 'package:takedat_app/screens/settings/bloc/settings_bloc.dart';
+import 'package:takedat_app/screens/settings/bloc/settings_event.dart';
+import 'package:takedat_app/screens/settings/bloc/settings_state.dart';
 
 class ManageStatusScreen extends StatefulWidget {
   const ManageStatusScreen({super.key});
@@ -90,363 +26,448 @@ class ManageStatusScreen extends StatefulWidget {
 class _ManageStatusScreenState extends State<ManageStatusScreen> {
   final TextEditingController searchController = TextEditingController();
 
-  List<EmployeeModel> filteredList = employeeList;
+  final ScrollController scrollController = ScrollController();
 
-  void _searchUsers(String value) {
-    final query = value.toLowerCase();
+  Timer? _debounce;
 
-    setState(() {
-      filteredList = employeeList.where((e) {
-        return e.name.toLowerCase().contains(query) ||
-            e.empId.toLowerCase().contains(query) ||
-            e.email.toLowerCase().contains(query);
-      }).toList();
+  late ManageStatusBloc bloc;
+
+  @override
+  void initState() {
+    super.initState();
+
+    bloc = context.read<ManageStatusBloc>()..add(LoadUsersEvent());
+
+    scrollController.addListener(() {
+      if (scrollController.position.pixels >=
+          scrollController.position.maxScrollExtent - 200) {
+        bloc.add(LoadMoreUsersEvent());
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+
+    scrollController.dispose();
+
+    _debounce?.cancel();
+
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F5F2),
-
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF00895F),
-        elevation: 3,
-        onPressed: () {
-          context.go(MyRoutes.registerScreen);
-        },
-        child: const Icon(
-          Icons.group_add_rounded,
-          color: Colors.white,
-        ),
-      ),
-
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
 
-          child: Column(
-            children: [
-              /// =======================================
-              /// TOP BAR
-              /// =======================================
+          child: BlocBuilder<ManageStatusBloc, ManageStatusState>(
+            builder: (context, state) {
+              final users = state is ManageStatusLoaded
+                  ? state.users
+                  : <UserModel>[];
 
-              const SizedBox(height: 8),
+              return Column(
+                children: [
+                  const SizedBox(height: 8),
 
-              GestureDetector(
-                onTap: ()=>context.pop(),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
+                  /// TOP BAR
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => context.pop(),
+                        child: const Icon(
                           Icons.arrow_back_ios_new_rounded,
                           size: 18,
-                          color: Colors.black87,
-                        ),
-                
-                        const SizedBox(width: 10),
-                
-                        Text(
-                          "Manage Status",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF0E4F3D),
-                          ),
-                        ),
-                      ],
-                    ),
-                
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              /// =======================================
-              /// SEARCH BAR
-              /// =======================================
-
-              Container(
-                height: 54,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.search_rounded,
-                      color: Colors.grey,
-                    ),
-
-                    const SizedBox(width: 10),
-
-                    Expanded(
-                      child: TextField(
-                        controller: searchController,
-                        onChanged: _searchUsers,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          hintText: "Search by name, ID or email...",
-                          hintStyle: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 14,
-                          ),
                         ),
                       ),
+
+                      const SizedBox(width: 10),
+
+                      const Text(
+                        "Manage Status",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0E4F3D),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  /// SEARCH
+                  SizedBox(
+                    height: 45,
+                    child: CustomTextField(
+                      controller: searchController,
+                      label: "",
+                      hint: "Search by name, email, number, emp id",
+                      icon: Icons.search,
+
+                      onChanged: (value) {
+                        if (_debounce?.isActive ?? false) {
+                          _debounce!.cancel();
+                        }
+
+                        _debounce = Timer(
+                          const Duration(milliseconds: 500),
+                          () {
+                            bloc.add(SearchUsersEvent(value.trim()));
+                          },
+                        );
+                      },
                     ),
+                  ),
 
-                    const Icon(
-                      Icons.tune_rounded,
-                      color: Colors.grey,
+                  const SizedBox(height: 16),
+
+                  /// LOADING
+                  if (state is ManageStatusLoading)
+                    const Expanded(
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  /// ERROR
+                  else if (state is ManageStatusFailure)
+                    Expanded(child: Center(child: Text(state.message)))
+                  /// LIST
+                  else
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollController,
+
+                        itemCount: users.length,
+
+                        itemBuilder: (context, index) {
+                          final user = users[index];
+
+                          return _employeeCard(user);
+                        },
+                      ),
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              /// =======================================
-              /// LIST
-              /// =======================================
-
-              Expanded(
-                child: ListView.builder(
-                  itemCount: filteredList.length,
-                  padding: EdgeInsets.zero,
-
-                  itemBuilder: (context, index) {
-                    final employee = filteredList[index];
-
-                    return _employeeCard(employee);
-                  },
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
         ),
       ),
     );
   }
 
-  /// =======================================
-  /// CARD
-  /// =======================================
+/// COMPACT CARD
+Widget _employeeCard(UserModel employee) {
+  final inactive = !employee.isActive;
 
-  Widget _employeeCard(EmployeeModel employee) {
-    final inactive = !employee.isActive;
+  return Container(
+    margin: const EdgeInsets.only(bottom: 12),
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+    padding: const EdgeInsets.all(14),
 
-      padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: inactive
+          ? const Color(0xFFF4F4F4)
+          : Colors.white,
 
-      decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(20),
+
+      border: Border.all(
         color: inactive
-            ? const Color(0xFFE9ECE8)
-            : Colors.white,
-
-        borderRadius: BorderRadius.circular(18),
-
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+            ? Colors.grey.shade300
+            : const Color(0xFFE7ECE9),
       ),
 
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          /// =======================================
-          /// TOP INFO
-          /// =======================================
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(.03),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
 
-          Row(
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+
+      children: [
+
+        /// AVATAR
+        CircleAvatar(
+          radius: 24,
+
+          backgroundColor: inactive
+              ? Colors.grey.shade300
+              : const Color(0xFF00895F),
+
+          child: Text(
+            employee.fullName.isNotEmpty
+                ? employee.fullName[0].toUpperCase()
+                : "U",
+
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 14),
+
+        /// MAIN INFO
+        Expanded(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+
             children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundImage: NetworkImage(employee.image),
+
+              /// TOP ROW
+              Row(
+                children: [
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+
+                      children: [
+
+                        /// NAME
+                        Text(
+                          employee.fullName,
+
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+
+                            color: inactive
+                                ? Colors.grey
+                                : Colors.black87,
+                          ),
+                        ),
+
+                        const SizedBox(height: 3),
+
+                        /// EMAIL
+                        Text(
+                          employee.email,
+
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+
+                          style: TextStyle(
+                            fontSize: 12.5,
+
+                            color: inactive
+                                ? Colors.grey
+                                : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  /// SWITCH
+                  Transform.scale(
+                    scale: .8,
+
+                    child: Switch(
+                      value: employee.isActive,
+
+                      activeColor: Colors.white,
+
+                      activeTrackColor:
+                          const Color(0xFF00895F),
+
+                      inactiveThumbColor: Colors.white,
+
+                      inactiveTrackColor:
+                          Colors.grey.shade400,
+
+                      onChanged: (value) {
+                        context
+                            .read<ManageStatusBloc>()
+                            .add(
+                              ToggleUserStatusEvent(
+                                userId: employee.id!,
+                                isActive: value,
+                              ),
+                            );
+                      },
+                    ),
+                  ),
+                ],
               ),
 
-              const SizedBox(width: 12),
+              const SizedBox(height: 10),
 
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      employee.name,
+              /// BADGES
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+
+                children: [
+
+                  /// EMP ID
+                  _badge(
+                    icon: Icons.badge_outlined,
+                    text: employee.empId,
+                    color: const Color(0xFF00895F),
+                    bg: const Color(0xFFE8F7F1),
+                  ),
+
+                  /// ROLE
+                  _badge(
+                    icon: Icons.work_outline_rounded,
+                    text: employee.role.toUpperCase(),
+                    color: Colors.blue.shade700,
+                    bg: Colors.blue.withOpacity(.08),
+                  ),
+
+                  /// STATUS
+                  _badge(
+                    icon: Icons.circle,
+                    text: employee.isActive
+                        ? "ACTIVE"
+                        : "INACTIVE",
+
+                    color: employee.isActive
+                        ? const Color(0xFF00895F)
+                        : Colors.grey,
+
+                    bg: employee.isActive
+                        ? const Color(0xFFE8F7F1)
+                        : Colors.grey.shade200,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+
+              /// PHONE + ADDRESS
+              Row(
+                children: [
+
+                  Icon(
+                    Icons.call_outlined,
+                    size: 15,
+
+                    color: inactive
+                        ? Colors.grey
+                        : Colors.black54,
+                  ),
+
+                  const SizedBox(width: 5),
+
+                  Text(
+                    employee.phone,
+
+                    style: TextStyle(
+                      fontSize: 12.5,
+
+                      color: inactive
+                          ? Colors.grey
+                          : Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 6),
+
+              Row(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+
+                children: [
+
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 15,
+
+                    color: inactive
+                        ? Colors.grey
+                        : Colors.black54,
+                  ),
+
+                  const SizedBox(width: 5),
+
+                  Expanded(
+                    child: Text(
+                      employee.address,
+
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+
                       style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 12.5,
+
                         color: inactive
                             ? Colors.grey
                             : Colors.black87,
                       ),
                     ),
-
-                    const SizedBox(height: 2),
-
-                    Text(
-                      employee.empId,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: inactive
-                            ? Colors.grey
-                            : const Color(0xFF00895F),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          /// EMAIL
-          _infoRow(
-            Icons.mail_outline_rounded,
-            employee.email,
-            inactive,
-          ),
-
-          const SizedBox(height: 6),
-
-          /// PHONE
-          _infoRow(
-            Icons.call_outlined,
-            employee.phone,
-            inactive,
-          ),
-
-          const SizedBox(height: 10),
-
-          /// ADDRESS
-          Text(
-            employee.address,
-            style: TextStyle(
-              fontSize: 13,
-              color: inactive
-                  ? Colors.grey
-                  : Colors.black54,
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          /// =======================================
-          /// STATUS
-          /// =======================================
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-
-                decoration: BoxDecoration(
-                  color: employee.isActive
-                      ? const Color(0xFFE2F5EA)
-                      : const Color(0xFFE5E6EC),
-
-                  borderRadius: BorderRadius.circular(30),
-                ),
-
-                child: Text(
-                  employee.isActive ? "Active" : "Inactive",
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: employee.isActive
-                        ? const Color(0xFF2B7F5E)
-                        : Colors.grey,
                   ),
-                ),
-              ),
-
-              const SizedBox(width: 8),
-
-              SizedBox(
-                width: 42,
-                height: 24,
-
-                child: Switch(
-                  value: employee.isActive,
-
-                  activeColor: Colors.white,
-                  activeTrackColor: const Color(0xFF00895F),
-
-                  inactiveThumbColor: Colors.white,
-                  inactiveTrackColor: Colors.grey.shade300,
-
-                  onChanged: (value) {
-                    setState(() {
-                      employee.isActive = value;
-                    });
-                  },
-                ),
+                ],
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// =======================================
-  /// INFO ROW
-  /// =======================================
-
-  Widget _infoRow(
-    IconData icon,
-    String text,
-    bool inactive,
-  ) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 16,
-          color: inactive
-              ? Colors.grey
-              : Colors.black54,
-        ),
-
-        const SizedBox(width: 6),
-
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 13,
-              color: inactive
-                  ? Colors.grey
-                  : Colors.black87,
-            ),
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
+
+/// BADGE
+Widget _badge({
+  required IconData icon,
+  required String text,
+  required Color color,
+  required Color bg,
+}) {
+  return Container(
+    padding: const EdgeInsets.symmetric(
+      horizontal: 10,
+      vertical: 5,
+    ),
+
+    decoration: BoxDecoration(
+      color: bg,
+      borderRadius: BorderRadius.circular(30),
+    ),
+
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+
+      children: [
+
+        Icon(
+          icon,
+          size: 12,
+          color: color,
+        ),
+
+        const SizedBox(width: 4),
+
+        Text(
+          text,
+
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: .3,
+            color: color,
+          ),
+        ),
+      ],
+    ),
+  );
+}
 }

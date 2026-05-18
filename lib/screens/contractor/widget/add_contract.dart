@@ -201,7 +201,7 @@ class _AddContractSheetState extends State<AddContractSheet> {
                                 ? _selectedFile!.path.split('/').last
                                 : widget.contractor?.paySlip != null
                                     ? "Pay slip attached"
-                                    : "Upload PDF or Image",
+                                    : "Upload Image",
                             style: AppTextStyles.body
                                 .copyWith(color: Colors.black),
                           ),
