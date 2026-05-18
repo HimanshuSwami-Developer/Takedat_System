@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:takedat_app/constant/session_manager.dart';
 import 'package:takedat_app/core/app_colors.dart';
 import 'package:takedat_app/router/my_routes.dart';
+import 'package:takedat_app/utils/app_utils.dart';
 
 class MainLayout extends StatelessWidget {
   final Widget child;
@@ -101,6 +104,37 @@ class MainLayout extends StatelessWidget {
 
             const Spacer(),
 
+            /// LOGOUT BUTTON
+            InkWell(
+              onTap: () async {
+                final confirm = await AppUtils.show(
+                  context: context,
+
+                  title: "Logout",
+
+                  message: "Are you sure you want to logout from your account?",
+
+                  confirmText: "Logout",
+
+                  confirmColor: Colors.red,
+
+                  icon: Icons.logout_rounded,
+                );
+
+                if (confirm == true) {
+                  /// LOGOUT
+                  await Supabase.instance.client.auth.signOut();
+
+                  /// CLEAR LOCAL SESSION
+                  await SessionManager.clear();
+
+                  context.go(MyRoutes.loginScreen);
+                }
+              },
+
+              child: const Icon(Icons.logout_rounded),
+            ),
+            const SizedBox(width: 12),
             InkWell(
               onTap: () {
                 context.push(MyRoutes.settingScreen);

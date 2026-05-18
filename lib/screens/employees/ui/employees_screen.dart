@@ -1,69 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:takedat_app/screens/auth/widget/custom_textfield.dart';
+import 'package:takedat_app/screens/employees/bloc/employee_compliance_bloc.dart';
+import 'package:takedat_app/screens/employees/bloc/employee_compliance_event.dart';
+import 'package:takedat_app/screens/employees/bloc/employee_compliance_state.dart';
 import 'package:takedat_app/screens/employees/widget/employee_card.dart';
-
-/// =======================================
-/// MODEL
-/// =======================================
-
-class EmployeeComplianceModel {
-  final String initials;
-  final String name;
-  final String empId;
-  final String email;
-  final String address;
-  final bool complianceRequired;
-  bool isExpanded;
-
-  EmployeeComplianceModel({
-    required this.initials,
-    required this.name,
-    required this.empId,
-    required this.email,
-    required this.address,
-    this.complianceRequired = false,
-    this.isExpanded = false,
-  });
-}
-
-/// =======================================
-/// DUMMY DATA
-/// =======================================
-
-final List<EmployeeComplianceModel> employeeList = [
-  EmployeeComplianceModel(
-    initials: "JS",
-    name: "Johnathan Smith",
-    empId: "88121",
-    email: "j.smith@workforce.co",
-    address: "24 Westbourne Grove, London, W2 5RH, United Kingdom",
-    isExpanded: true,
-  ),
-
-  EmployeeComplianceModel(
-    initials: "AM",
-    name: "Alice Martinez",
-    empId: "9902",
-    email: "a.martinez@workforce.co",
-    address: "12 Oxford Street, Manchester",
-  ),
-
-  EmployeeComplianceModel(
-    initials: "DW",
-    name: "David Wilson",
-    empId: "4451",
-    email: "d.wilson@workforce.co",
-    address: "221B Baker Street, London",
-  ),
-
-  EmployeeComplianceModel(
-    initials: "RK",
-    name: "Robert King",
-    empId: "1120",
-    email: "r.king@workforce.co",
-    address: "7 King Street, Liverpool",
-    complianceRequired: true,
-  ),
-];
 
 /// =======================================
 /// SCREEN
@@ -79,19 +22,38 @@ class EmployeeComplianceScreen extends StatefulWidget {
 
 class _EmployeeComplianceScreenState extends State<EmployeeComplianceScreen> {
   final TextEditingController searchController = TextEditingController();
+  Timer? _debounce;
+  final ScrollController _scrollController = ScrollController();
 
-  List<EmployeeComplianceModel> filteredList = employeeList;
+  late EmployeeComplianceBloc bloc;
 
-  void _searchEmployee(String value) {
-    final query = value.toLowerCase();
+  @override
+  void initState() {
+    super.initState();
 
-    setState(() {
-      filteredList = employeeList.where((e) {
-        return e.name.toLowerCase().contains(query) ||
-            e.empId.toLowerCase().contains(query) ||
-            e.email.toLowerCase().contains(query);
-      }).toList();
-    });
+    bloc = context.read<EmployeeComplianceBloc>();
+
+    bloc.add(LoadEmployeeComplianceEvent());
+
+    _scrollController.addListener(_pagination);
+  }
+
+  void _pagination() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 300) {
+      bloc.add(LoadEmployeeComplianceEvent());
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+
+    searchController.dispose();
+
+    _scrollController.dispose();
+
+    super.dispose();
   }
 
   @override
@@ -105,48 +67,60 @@ class _EmployeeComplianceScreenState extends State<EmployeeComplianceScreen> {
 
           child: Column(
             children: [
-              /// =======================================
-              /// SEARCH SECTION
-              /// =======================================
-              Container(
-                padding: const EdgeInsets.all(12),
+              /// SEARCH
+              _searchField(),
 
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                ),
+              const SizedBox(height: 14),
 
-                child: _searchField(
-                  hint: "Search by name",
-                  icon: Icons.search,
-                  controller: searchController,
-                  onChanged: _searchEmployee,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              /// =======================================
               /// LIST
-              /// =======================================
               Expanded(
-                child: ListView.builder(
-                  itemCount: filteredList.length,
+                child:
+                    BlocBuilder<
+                      EmployeeComplianceBloc,
+                      EmployeeComplianceState
+                    >(
+                      builder: (context, state) {
+                        if (state is EmployeeComplianceLoading) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
 
-                  itemBuilder: (context, index) {
-                    final employee = filteredList[index];
+                        if (state is EmployeeComplianceError) {
+                          return Center(child: Text(state.message));
+                        }
 
-                    return EmployeeComplianceCard(
-                      employee: employee,
+                        if (state is EmployeeComplianceLoaded) {
+                          if (state.employees.isEmpty) {
+                            return const Center(
+                              child: Text("No employees found"),
+                            );
+                          }
 
-                      onTap: () {
-                        setState(() {
-                          employee.isExpanded = !employee.isExpanded;
-                        });
+                          return ListView.builder(
+                            controller: _scrollController,
+
+                            itemCount: state.employees.length,
+
+                            itemBuilder: (context, index) {
+                              final item = state.employees[index];
+
+                              return EmployeeComplianceCard(
+                                employee: item,
+
+                                onTap: () {
+                                  bloc.add(
+                                    ToggleExpandEmployeeEvent(item.user.id!),
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        }
+
+                        return const SizedBox();
                       },
-                    );
-                  },
-                ),
+                    ),
               ),
             ],
           ),
@@ -155,49 +129,27 @@ class _EmployeeComplianceScreenState extends State<EmployeeComplianceScreen> {
     );
   }
 
-  /// =======================================
   /// SEARCH FIELD
-  /// =======================================
-
-  Widget _searchField({
-    required String hint,
-    required IconData icon,
-    TextEditingController? controller,
-    Function(String)? onChanged,
-  }) {
+  Widget _searchField() {
     return Container(
-      height: 46,
+      width: double.infinity,
+      child: CustomTextField(
+        onChanged: (value) {
+          /// CANCEL OLD TIMER
+          if (_debounce?.isActive ?? false) {
+            _debounce?.cancel();
+          }
 
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+          /// DEBOUNCE
+          _debounce = Timer(const Duration(milliseconds: 500), () {
+            final query = value.trim();
 
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F2EE),
-
-        borderRadius: BorderRadius.circular(10),
-
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: Colors.grey),
-
-          const SizedBox(width: 8),
-
-          Expanded(
-            child: TextField(
-              controller: controller,
-              onChanged: onChanged,
-
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: hint,
-
-                hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
-              ),
-            ),
-          ),
-        ],
+            bloc.add(SearchEmployeeComplianceEvent(query));
+          });
+        },
+        label: "",
+        hint: "Search employee or ID or number or email",
+        icon: Icons.search,
       ),
     );
   }

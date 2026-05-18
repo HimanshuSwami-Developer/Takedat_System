@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:takedat_app/screens/employees/ui/employees_screen.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+
+import 'package:takedat_app/screens/employees/bloc/employee_compliance_state.dart';
 
 class EmployeeComplianceCard extends StatelessWidget {
-  final EmployeeComplianceModel employee;
+  final EmployeeComplianceItem employee;
+
   final VoidCallback onTap;
 
   const EmployeeComplianceCard({
@@ -13,49 +17,79 @@ class EmployeeComplianceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDesktop = MediaQuery.of(context).size.width >= 900;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+    final user = employee.user;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+
+      margin: const EdgeInsets.only(bottom: 16),
 
       decoration: BoxDecoration(
         color: Colors.white,
 
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
 
         border: Border.all(
           color: employee.isExpanded
               ? const Color(0xFF00C57B)
-              : Colors.transparent,
-          width: 1.4,
+              : Colors.grey.shade100,
+
+          width: 1.2,
         ),
+
+        boxShadow: [
+          BoxShadow(
+            color: employee.isExpanded
+                ? const Color(0x1400C57B)
+                : Colors.black.withOpacity(.03),
+
+            blurRadius: 20,
+
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
 
       child: Column(
         children: [
-          /// =======================================
+          /// =================================================
           /// HEADER
-          /// =======================================
+          /// =================================================
           InkWell(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
+
             onTap: onTap,
 
             child: Padding(
               padding: const EdgeInsets.all(14),
 
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-
                 children: [
                   /// AVATAR
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: _avatarColor(employee.initials),
+                  Container(
+                    height: 52,
+                    width: 52,
+
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF00C57B), Color(0xFF00A86B)],
+                      ),
+
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+
+                    alignment: Alignment.center,
 
                     child: Text(
-                      employee.initials,
+                      user.fullName.isNotEmpty
+                          ? user.fullName[0].toUpperCase()
+                          : "U",
 
                       style: const TextStyle(
-                        color: Colors.black87,
+                        color: Colors.white,
+
+                        fontSize: 20,
+
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -69,262 +103,267 @@ class EmployeeComplianceCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
 
                       children: [
-                        Stack(
-                          clipBehavior: Clip.none,
-
+                        /// NAME
+                        Row(
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            Expanded(
+                              child: Text(
+                                user.fullName,
 
-                              children: [
-                                Text(
-                                  employee.name,
+                                maxLines: 1,
 
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                overflow: TextOverflow.ellipsis,
+
+                                style: const TextStyle(
+                                  fontSize: 15.5,
+
+                                  fontWeight: FontWeight.w700,
                                 ),
-
-                                const SizedBox(height: 2),
-
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.badge_outlined,
-                                      size: 15,
-                                      color: Colors.grey,
-                                    ),
-
-                                    const SizedBox(width: 4),
-
-                                    Text(
-                                      "EMP-${employee.empId}",
-
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 2),
-
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.mail_outline,
-                                      size: 15,
-                                      color: Colors.grey,
-                                    ),
-
-                                    const SizedBox(width: 4),
-
-                                    Expanded(
-                                      child: Text(
-                                        employee.email,
-
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                              ),
                             ),
 
                             if (employee.complianceRequired)
-                              Positioned(
-                                top: -12,
-                                right: 0,
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
 
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
+                                  vertical: 4,
+                                ),
 
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFD93025),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
 
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
 
-                                  child: const Text(
-                                    "COMPLIANCE ACTION REQUIRED",
+                                child: const Text(
+                                  "ACTION",
 
-                                    style: TextStyle(
-                                      fontSize: 8,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                                  style: TextStyle(
+                                    color: Colors.white,
+
+                                    fontSize: 9,
+
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 7),
+
+                        /// TAGS
+                        Wrap(
+                          spacing: 7,
+                          runSpacing: 7,
+
+                          children: [
+                            _tag(
+                              Icons.badge_outlined,
+
+                              "EMP-${user.empId}",
+
+                              const Color(0xFFF4F5F7),
+
+                              Colors.black87,
+                            ),
+
+                            _tag(
+                              Icons.admin_panel_settings_outlined,
+
+                              user.role.toUpperCase(),
+
+                              const Color(0xFFEAF7FF),
+
+                              const Color(0xFF0077FF),
+                            ),
                           ],
                         ),
                       ],
                     ),
                   ),
 
-                  Icon(
-                    employee.isExpanded
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
-                    color: Colors.black54,
+                  const SizedBox(width: 6),
+
+                  /// ARROW
+                  AnimatedRotation(
+                    turns: employee.isExpanded ? .5 : 0,
+
+                    duration: const Duration(milliseconds: 250),
+
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+
+                      size: 28,
+
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                 ],
               ),
             ),
           ),
 
-          /// =======================================
-          /// EXPANDED SECTION
-          /// =======================================
+          /// =================================================
+          /// EXPANDED CONTENT
+          /// =================================================
           if (employee.isExpanded) ...[
-            Divider(height: 1, color: Colors.grey.shade300),
+            Divider(height: 1, color: Colors.grey.shade100),
 
             Padding(
               padding: const EdgeInsets.all(14),
 
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-
                 children: [
-                  /// ADDRESS TITLE
-                  const Text(
-                    "PRIMARY ADDRESS",
+                  /// EMAIL
+                  _copyTile(
+                    context,
 
-                    style: TextStyle(
-                      fontSize: 10,
-                      letterSpacing: 1,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.grey,
-                    ),
+                    icon: Icons.email_outlined,
+
+                    text: user.email,
                   ),
 
                   const SizedBox(height: 10),
 
-                  /// ADDRESS BOX
-                  Container(
-                    padding: const EdgeInsets.all(12),
+                  /// PHONE
+                  _copyTile(
+                    context,
 
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F4EE),
+                    icon: Icons.call_outlined,
 
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                    text: user.phone,
+                  ),
 
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 10),
 
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 20,
-                          color: Colors.grey,
-                        ),
+                  /// ADDRESS
+                  _copyTile(
+                    context,
 
-                        const SizedBox(width: 8),
+                    icon: Icons.location_on_outlined,
 
-                        Expanded(
-                          child: Text(
-                            employee.address,
-
-                            style: const TextStyle(fontSize: 13, height: 1.4),
-                          ),
-                        ),
-                      ],
-                    ),
+                    text: user.address,
                   ),
 
                   const SizedBox(height: 18),
 
-                  /// TITLE
-                  const Text(
-                    "COMPLIANCE DOCUMENTS",
-
-                    style: TextStyle(
-                      fontSize: 10,
-                      letterSpacing: 1,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.grey,
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  /// DOCUMENT GRID
+                  /// DOCUMENTS
                   Wrap(
-                    spacing: 10,
-                    runSpacing:10,
-                    alignment: WrapAlignment.start,
+                    spacing: 12,
+                    runSpacing: 12,
 
                     children: [
-                      _responsiveDocCard(
-                        context,
-                        isDesktop,
+                      /// ACT ORANGE
+                      if (employee.actCertificate?.actOrangeUrl != null)
                         _docCard(
+                          context,
+
                           title: "Act Orange",
-                          expiry: "EXP: DEC 2025",
+
+                          expiry: employee.actCertificate?.actOrangeExpiry,
+
+                          url: employee.actCertificate?.actOrangeUrl,
+
                           icon: Icons.shield_outlined,
-                          bg: const Color(0xFFDFF4E7),
-                          iconBg: const Color(0xFFC6EED5),
-                        ),
-                      ),
 
-                      _responsiveDocCard(
-                        context,
-                        isDesktop,
+                          color: const Color(0xFFEAFBF3),
+                        ),
+
+                      /// ACT BLUE
+                      if (employee.actCertificate?.actBlueUrl != null)
                         _docCard(
+                          context,
+
                           title: "Act Blue",
-                          expiry: "EXP: NOV 2023",
-                          icon: Icons.warning_amber_rounded,
-                          bg: const Color(0xFFF2E8D9),
-                          iconBg: const Color(0xFFE3D4BC),
-                        ),
-                      ),
 
-                      _responsiveDocCard(
-                        context,
-                        isDesktop,
-                        _docCard(
-                          title: "SIA License",
-                          expiry: "EXP: OCT 2023",
-                          icon: Icons.gavel_rounded,
-                          bg: const Color(0xFFF6D9D8),
-                          iconBg: const Color(0xFFEBC0BE),
-                          expiryColor: const Color(0xFFD93025),
-                        ),
-                      ),
+                          expiry: employee.actCertificate?.actBlueExpiry,
 
-                      _responsiveDocCard(
-                        context,
-                        isDesktop,
+                          url: employee.actCertificate?.actBlueUrl,
+
+                          icon: Icons.verified_user_outlined,
+
+                          color: const Color(0xFFEAF1FF),
+                        ),
+
+                      /// SIA
+                      if (employee.siaLicence?.url != null)
                         _docCard(
+                          context,
+
+                          title: "SIA Licence",
+
+                          expiry: employee.siaLicence?.siaLicenceExpiry,
+
+                          url: employee.siaLicence?.url,
+
+                          icon: Icons.gavel_outlined,
+
+                          color: const Color(0xFFFFEEEE),
+                        ),
+
+                      /// SHARE CODE
+                      if (employee.sharecodeFirstAid?.shareCodeUrl != null)
+                        _docCard(
+                          context,
+
                           title: "Share Code",
-                          expiry: "EXP: JAN 2026",
-                          icon: Icons.qr_code_2,
-                          bg: const Color(0xFFE7EFE8),
-                          iconBg: const Color(0xFFD4E2D7),
-                        ),
-                      ),
 
-                      _responsiveDocCard(
-                        context,
-                        isDesktop,
-                        _docCard(
-                          title: "First Aid",
-                          expiry: "EXP: MAY 2024",
-                          icon: Icons.medical_services_outlined,
-                          bg: const Color(0xFFE7EFE8),
-                          iconBg: const Color(0xFFD4E2D7),
+                          expiry: employee.sharecodeFirstAid?.shareCodeExpiry,
+
+                          url: employee.sharecodeFirstAid?.shareCodeUrl,
+
+                          icon: Icons.qr_code_2_outlined,
+
+                          color: const Color(0xFFF3F8E8),
                         ),
-                      ),
+
+                      /// FIRST AID
+                      if (employee.sharecodeFirstAid?.firstAidUrl != null)
+                        _docCard(
+                          context,
+
+                          title: "First Aid",
+
+                          expiry: employee.sharecodeFirstAid?.firstAidExpiry,
+
+                          url: employee.sharecodeFirstAid?.firstAidUrl,
+
+                          icon: Icons.medical_services_outlined,
+
+                          color: const Color(0xFFE9F7F4),
+                        ),
+
+                      /// SIGNED AUTH
+                      if (employee.signedDocuments?.signedAuthenticationUrl !=
+                          null)
+                        _docCard(
+                          context,
+
+                          title: "Signed Auth",
+
+                          url:
+                              employee.signedDocuments?.signedAuthenticationUrl,
+
+                          icon: Icons.description_outlined,
+
+                          color: const Color(0xFFF4EEFF),
+                        ),
+
+                      /// SIGNED SCREENING
+                      if (employee.signedDocuments?.signedScreeningUrl != null)
+                        _docCard(
+                          context,
+
+                          title: "Signed Screening",
+
+                          url: employee.signedDocuments?.signedScreeningUrl,
+
+                          icon: Icons.assignment_outlined,
+
+                          color: const Color(0xFFFFF6EA),
+                        ),
                     ],
                   ),
                 ],
@@ -336,83 +375,36 @@ class EmployeeComplianceCard extends StatelessWidget {
     );
   }
 
-Widget _responsiveDocCard(
-  BuildContext context,
-  bool isDesktop,
-  Widget child,
-) {
-  final availableWidth =
-      MediaQuery.of(context).size.width;
+  /// =====================================================
+  /// TAG
+  /// =====================================================
 
-  double cardWidth;
-
-  if (isDesktop) {
-    /// 5 cards in desktop row
-    cardWidth = (availableWidth - 120) / 5;
-  } else {
-    /// 2 cards in mobile row
-    cardWidth = (availableWidth - 50) / 2.2;
-  }
-
-  return SizedBox(
-    width: cardWidth,
-    child: child,
-  );
-}
-
-  /// =======================================
-  /// DOCUMENT CARD
-  /// =======================================
-
-  Widget _docCard({
-    required String title,
-    required String expiry,
-    required IconData icon,
-    required Color bg,
-    required Color iconBg,
-    Color expiryColor = Colors.black54,
-  }) {
+  Widget _tag(IconData icon, String text, Color bg, Color textColor) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
 
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+
+        borderRadius: BorderRadius.circular(30),
       ),
 
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
 
         children: [
-          Container(
-            width: 34,
-            height: 34,
+          Icon(icon, size: 13, color: textColor),
 
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(8),
-            ),
-
-            child: Icon(icon, size: 18, color: Colors.black54),
-          ),
-
-          const SizedBox(height: 12),
+          const SizedBox(width: 5),
 
           Text(
-            title,
-            textAlign: TextAlign.center,
-
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-          ),
-
-          const SizedBox(height: 6),
-
-          Text(
-            expiry,
+            text,
 
             style: TextStyle(
-              fontSize: 10,
-              color: expiryColor,
+              fontSize: 10.5,
+
+              color: textColor,
+
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -421,19 +413,272 @@ Widget _responsiveDocCard(
     );
   }
 
-  Color _avatarColor(String initials) {
-    switch (initials) {
-      case "JS":
-        return const Color(0xFF00B26B);
+  /// =====================================================
+  /// COPY TILE
+  /// =====================================================
 
-      case "AM":
-        return const Color(0xFFDCE3F7);
+  Widget _copyTile(
+    BuildContext context, {
 
-      case "DW":
-        return const Color(0xFFF4D1CF);
+    required IconData icon,
 
-      default:
-        return const Color(0xFFD9DEF7);
-    }
+    required String text,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F8FA),
+
+        borderRadius: BorderRadius.circular(14),
+      ),
+
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.black54),
+
+          const SizedBox(width: 10),
+
+          Expanded(
+            child: Text(
+              text,
+
+              maxLines: 1,
+
+              overflow: TextOverflow.ellipsis,
+
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+          ),
+
+          InkWell(
+            borderRadius: BorderRadius.circular(8),
+
+            onTap: () async {
+              await Clipboard.setData(ClipboardData(text: text));
+
+              if (!context.mounted) return;
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  behavior: SnackBarBehavior.floating,
+
+                  content: Text("Copied"),
+                ),
+              );
+            },
+
+            child: Container(
+              padding: const EdgeInsets.all(6),
+
+              decoration: BoxDecoration(
+                color: Colors.white,
+
+                borderRadius: BorderRadius.circular(8),
+              ),
+
+              child: const Icon(Icons.copy_rounded, size: 15),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// =====================================================
+  /// DOCUMENT CARD
+  /// =====================================================
+
+  Widget _docCard(
+    BuildContext context, {
+
+    required String title,
+
+    required String? url,
+
+    required IconData icon,
+
+    required Color color,
+
+    DateTime? expiry,
+  }) {
+    final expired = expiry != null && expiry.isBefore(DateTime.now());
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+
+      onTap: () {
+        if (url == null) return;
+
+        showGeneralDialog(
+          context: context,
+
+          barrierDismissible: true,
+
+          barrierLabel: "Preview",
+
+          barrierColor: Colors.black87,
+
+          transitionDuration: const Duration(milliseconds: 250),
+
+          pageBuilder: (context, animation, secondaryAnimation) {
+            return SafeArea(
+              child: Stack(
+                children: [
+                  /// IMAGE
+                  Center(
+                    child: InteractiveViewer(
+                      child: Image.network(url, fit: BoxFit.contain),
+                    ),
+                  ),
+
+                  /// CLOSE
+                  Positioned(
+                    top: 20,
+                    right: 20,
+
+                    child: Material(
+                      color: Colors.transparent,
+
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(50),
+
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+
+                          child: const Icon(Icons.close),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+
+      child: Container(
+        width: 160,
+
+        padding: const EdgeInsets.all(14),
+
+        decoration: BoxDecoration(
+          color: color,
+
+          borderRadius: BorderRadius.circular(18),
+        ),
+
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+
+              decoration: BoxDecoration(
+                color: Colors.white,
+
+                borderRadius: BorderRadius.circular(14),
+              ),
+
+              child: Icon(icon, size: 22),
+            ),
+
+            const SizedBox(height: 14),
+
+            Text(
+              title,
+
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+
+            if (expiry != null) ...[
+              const SizedBox(height: 10),
+
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 7,
+                ),
+
+                decoration: BoxDecoration(
+                  color: expired ? Colors.red.withOpacity(.12) : Colors.white,
+
+                  borderRadius: BorderRadius.circular(30),
+                ),
+
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+
+                  children: [
+                    Icon(
+                      expired
+                          ? Icons.warning_amber_rounded
+                          : Icons.calendar_today_outlined,
+
+                      size: 13,
+
+                      color: expired ? Colors.red : Colors.black54,
+                    ),
+
+                    const SizedBox(width: 6),
+
+                    Text(
+                      DateFormat('dd MMM yyyy').format(expiry),
+
+                      style: TextStyle(
+                        fontSize: 11,
+
+                        color: expired ? Colors.red : Colors.black87,
+
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 14),
+
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+
+              decoration: BoxDecoration(
+                color: Colors.white,
+
+                borderRadius: BorderRadius.circular(30),
+              ),
+
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+
+                children: [
+                  Icon(Icons.remove_red_eye_outlined, size: 15),
+
+                  SizedBox(width: 6),
+
+                  Text(
+                    "Preview",
+
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

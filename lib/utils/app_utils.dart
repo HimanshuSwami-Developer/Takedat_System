@@ -35,6 +35,224 @@ static String format(
     }
   }
 
+
+static Future<bool?> show({
+    required BuildContext context,
+
+    required String title,
+
+    required String message,
+
+    String confirmText = "Confirm",
+
+    String cancelText = "Cancel",
+
+    Color confirmColor = Colors.red,
+
+    IconData icon = Icons.warning_amber_rounded,
+  }) {
+    return showDialog<bool>(
+      context: context,
+
+      barrierDismissible: false,
+
+      builder: (ctx) {
+
+        return Dialog(
+          backgroundColor: Colors.transparent,
+
+          insetPadding:
+              const EdgeInsets.symmetric(
+            horizontal: 24,
+          ),
+
+          child: Container(
+            width: 420,
+
+            padding: const EdgeInsets.all(24),
+
+            decoration: BoxDecoration(
+              color: Colors.white,
+
+              borderRadius:
+                  BorderRadius.circular(26),
+
+              boxShadow: [
+                BoxShadow(
+                  color:
+                      Colors.black.withOpacity(.08),
+
+                  blurRadius: 30,
+
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+
+              children: [
+
+                /// ICON
+                Container(
+                  height: 74,
+                  width: 74,
+
+                  decoration: BoxDecoration(
+                    color:
+                        confirmColor.withOpacity(.1),
+
+                    shape: BoxShape.circle,
+                  ),
+
+                  child: Icon(
+                    icon,
+
+                    color: confirmColor,
+
+                    size: 38,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                /// TITLE
+                Text(
+                  title,
+
+                  textAlign: TextAlign.center,
+
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                /// MESSAGE
+                Text(
+                  message,
+
+                  textAlign: TextAlign.center,
+
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+
+                    color: Colors.black.withOpacity(.6),
+                  ),
+                ),
+
+                const SizedBox(height: 28),
+
+                /// BUTTONS
+                Row(
+                  children: [
+
+                    /// CANCEL
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(
+                            ctx,
+                            false,
+                          );
+                        },
+
+                        style:
+                            OutlinedButton.styleFrom(
+                          minimumSize:
+                              const Size(
+                            double.infinity,
+                            50,
+                          ),
+
+                          shape:
+                              RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(
+                              14,
+                            ),
+                          ),
+
+                          side: BorderSide(
+                            color:
+                                Colors.grey.shade300,
+                          ),
+                        ),
+
+                        child: Text(
+                          cancelText,
+
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontWeight:
+                                FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    /// CONFIRM
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(
+                            ctx,
+                            true,
+                          );
+                        },
+
+                        style:
+                            ElevatedButton.styleFrom(
+                          elevation: 0,
+
+                          backgroundColor:
+                              confirmColor,
+
+                          minimumSize:
+                              const Size(
+                            double.infinity,
+                            50,
+                          ),
+
+                          shape:
+                              RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(
+                              14,
+                            ),
+                          ),
+                        ),
+
+                        child: Text(
+                          confirmText,
+
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight:
+                                FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
+
   static Future<void> showDialogMessage(
     BuildContext context, {
 
