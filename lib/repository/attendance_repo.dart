@@ -1,5 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:convert';
+import 'dart:html' as html;
 
+import 'package:intl/intl.dart';
 import '../models/attendance_model.dart';
 import '../models/shift_model.dart';
 
@@ -253,5 +256,116 @@ class AttendanceRepository {
   /// DELETE ATTENDANCE
   Future<void> deleteAttendance(int id) async {
     await supabase.from('attendance').delete().eq('id', id);
+  }
+
+  /// =====================================================
+  /// EXPORT COMPLETE ATTENDANCE CSV
+  /// =====================================================
+
+  Future<void> exportAttendanceCsv() async {
+    /// FETCH COMPLETE DATA
+    final response = await supabase
+        .from('attendance')
+        .select('''
+        *,
+        users (
+          id,
+          full_name,
+          email,
+          phone,
+          emp_id
+        ),
+        shifts (
+          id,
+          shift_name
+        )
+      ''')
+        .order('created_at', ascending: false);
+
+    /// CSV HEADERS
+    List<List<dynamic>> rows = [
+      [
+        'Attendance ID',
+        'Employee ID',
+        'Employee Name',
+        'Email',
+        'Phone',
+        'Shift',
+        'Mode',
+        'Status',
+        'Shift Start',
+        'Shift End',
+        'Created At',
+      ],
+    ];
+
+    /// ADD DATA
+    for (final item in response) {
+      final attendance = AttendanceModel.fromJson(item);
+
+      rows.add([
+        attendance.id ?? '',
+
+        attendance.user?['emp_id'] ?? '',
+
+        attendance.user?['full_name'] ?? '',
+
+        attendance.user?['email'] ?? '',
+
+        attendance.user?['phone'] ?? '',
+
+        attendance.shift?['shift_name'] ?? '',
+
+        attendance.mode,
+
+        attendance.status,
+
+        attendance.shiftStart != null
+            ? DateFormat('dd MMM yyyy hh:mm a').format(attendance.shiftStart)
+            : '',
+
+        attendance.shiftEnd != null
+            ? DateFormat('dd MMM yyyy hh:mm a').format(attendance.shiftEnd)
+            : '',
+
+        attendance.createdAt != null
+            ? DateFormat('dd MMM yyyy').format(attendance.createdAt!)
+            : '',
+      ]);
+    }
+
+    /// CONVERT TO CSV
+    String csvData = rows
+        .map(
+          (row) => row
+              .map((e) {
+                final value = e.toString();
+
+                /// ESCAPE CSV
+                if (value.contains(',') ||
+                    value.contains('"') ||
+                    value.contains('\n')) {
+                  return '"${value.replaceAll('"', '""')}"';
+                }
+
+                return value;
+              })
+              .join(','),
+        )
+        .join('\n');
+
+    /// DOWNLOAD
+    final bytes = utf8.encode(csvData);
+
+    final blob = html.Blob([bytes]);
+
+    final url = html.Url.createObjectUrlFromBlob(blob);
+
+    final anchor = html.AnchorElement(href: url)
+      ..target = 'blank'
+      ..download = 'attendance_${DateTime.now().millisecondsSinceEpoch}.csv'
+      ..click();
+
+    html.Url.revokeObjectUrl(url);
   }
 }

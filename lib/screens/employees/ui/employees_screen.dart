@@ -126,6 +126,93 @@ class _EmployeeComplianceScreenState extends State<EmployeeComplianceScreen> {
           ),
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: const Color(0xFF00C57B),
+
+        elevation: 4,
+
+        icon: const Icon(Icons.download_rounded, color: Colors.white),
+
+        label: const Text(
+          "Download Documents",
+
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+
+        onPressed: () async {
+          BuildContext? dialogContext;
+
+          /// SHOW LOADER
+          showDialog(
+            context: context,
+
+            barrierDismissible: false,
+
+            builder: (ctx) {
+              dialogContext = ctx;
+
+              return const _DownloadDialog();
+            },
+          );
+
+          try {
+            /// DOWNLOAD
+            await bloc.repository.downloadDocumentsBucket();
+
+            /// CLOSE DIALOG
+            if (dialogContext != null) {
+              Navigator.of(dialogContext!, rootNavigator: true).pop();
+            }
+
+            if (!context.mounted) return;
+
+            /// SUCCESS
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                behavior: SnackBarBehavior.floating,
+
+                backgroundColor: Colors.green,
+
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+
+                content: const Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+
+                    SizedBox(width: 12),
+
+                    Expanded(child: Text("Documents downloaded successfully")),
+                  ],
+                ),
+              ),
+            );
+          } catch (e) {
+            /// CLOSE DIALOG
+            if (dialogContext != null) {
+              Navigator.of(dialogContext!, rootNavigator: true).pop();
+            }
+
+            if (!context.mounted) return;
+
+            /// ERROR
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                behavior: SnackBarBehavior.floating,
+
+                backgroundColor: Colors.red,
+
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+
+                content: Text(e.toString()),
+              ),
+            );
+          }
+        },
+      ),
     );
   }
 
@@ -150,6 +237,190 @@ class _EmployeeComplianceScreenState extends State<EmployeeComplianceScreen> {
         label: "",
         hint: "Search employee or ID or number or email",
         icon: Icons.search,
+      ),
+    );
+  }
+}
+
+
+/// ======================================================
+/// DOWNLOAD DIALOG
+/// ======================================================
+
+class _DownloadDialog
+    extends StatefulWidget {
+
+  const _DownloadDialog();
+
+  @override
+  State<_DownloadDialog> createState() =>
+      _DownloadDialogState();
+}
+
+class _DownloadDialogState
+    extends State<_DownloadDialog>
+    with SingleTickerProviderStateMixin {
+
+  late AnimationController controller;
+
+  @override
+  void initState() {
+
+    super.initState();
+
+    controller = AnimationController(
+
+      vsync: this,
+
+      duration:
+          const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+
+    controller.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    return Dialog(
+
+      backgroundColor:
+          Colors.transparent,
+
+      child: Container(
+
+        padding:
+            const EdgeInsets.all(24),
+
+        decoration: BoxDecoration(
+
+          color: Colors.white,
+
+          borderRadius:
+              BorderRadius.circular(
+            28,
+          ),
+        ),
+
+        child: Column(
+
+          mainAxisSize:
+              MainAxisSize.min,
+
+          children: [
+
+            /// ICON
+            RotationTransition(
+
+              turns: controller,
+
+              child: Container(
+
+                height: 80,
+                width: 80,
+
+                decoration:
+                    const BoxDecoration(
+
+                  color:
+                      Color(0x1400C57B),
+
+                  shape:
+                      BoxShape.circle,
+                ),
+
+                child: const Icon(
+
+                  Icons.folder_zip_rounded,
+
+                  size: 42,
+
+                  color:
+                      Color(0xFF00C57B),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            const Text(
+
+              "Preparing Documents",
+
+              style: TextStyle(
+
+                fontSize: 18,
+
+                fontWeight:
+                    FontWeight.w700,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            Text(
+
+              "Downloading and compressing employee files...",
+
+              textAlign:
+                  TextAlign.center,
+
+              style: TextStyle(
+
+                color:
+                    Colors.grey.shade600,
+
+                height: 1.5,
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            ClipRRect(
+
+              borderRadius:
+                  BorderRadius.circular(
+                30,
+              ),
+
+              child:
+                  const LinearProgressIndicator(
+
+                minHeight: 10,
+
+                backgroundColor:
+                    Color(0xFFEAEAEA),
+
+                valueColor:
+                    AlwaysStoppedAnimation(
+                  Color(0xFF00C57B),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            const Text(
+
+              "Please wait...",
+
+              style: TextStyle(
+
+                fontWeight:
+                    FontWeight.w600,
+
+                color:
+                    Color(0xFF00C57B),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

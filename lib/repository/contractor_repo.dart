@@ -1,7 +1,10 @@
 import 'package:flutter/rendering.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:takedat_app/models/contractor_model.dart';
+import 'dart:convert';
+import 'dart:html' as html;
 
+import 'package:intl/intl.dart';
 class ContractorRepository {
   final _supabase = Supabase.instance.client;
 
@@ -105,5 +108,93 @@ class ContractorRepository {
 
     if (response == null) return null;
     return ContractorModel.fromJson(response);
+  }
+
+  // Export all contractors to CSV
+  /// =====================================================
+  /// EXPORT CSV
+  /// =====================================================
+
+  Future<void> exportContractorCsv() async {
+    final response = await _supabase
+        .from('contractors')
+        .select()
+        .order('created_at', ascending: false);
+
+    /// CSV HEADERS
+    List<List<dynamic>> rows = [
+      [
+        'ID',
+        'Contractor Name',
+        'Email',
+        'Contact Number',
+        'Pay Amount',
+        'Pay Date',
+        'Pay Slip',
+        'Created At',
+      ],
+    ];
+
+    /// ROWS
+    for (final item in response) {
+      final contractor = ContractorModel.fromJson(
+        Map<String, dynamic>.from(item),
+      );
+
+      rows.add([
+        contractor.id ?? '',
+
+        contractor.name,
+
+        contractor.email,
+
+        contractor.phone,
+
+        contractor.amount,
+
+        contractor.payDate != null
+            ? DateFormat('dd MMM yyyy').format(contractor.payDate!)
+            : '',
+
+        contractor.paySlip ?? '',
+
+        contractor.createdAt != null
+            ? DateFormat('dd MMM yyyy hh:mm a').format(contractor.createdAt!)
+            : '',
+      ]);
+    }
+
+    /// CSV STRING
+    final csvData = rows
+        .map(
+          (row) => row
+              .map((e) {
+                final value = e.toString();
+
+                if (value.contains(',') ||
+                    value.contains('"') ||
+                    value.contains('\n')) {
+                  return '"${value.replaceAll('"', '""')}"';
+                }
+
+                return value;
+              })
+              .join(','),
+        )
+        .join('\n');
+
+    /// DOWNLOAD
+    final bytes = utf8.encode(csvData);
+
+    final blob = html.Blob([bytes]);
+
+    final url = html.Url.createObjectUrlFromBlob(blob);
+
+    html.AnchorElement(href: url)
+      ..target = 'blank'
+      ..download = 'contractors_${DateTime.now().millisecondsSinceEpoch}.csv'
+      ..click();
+
+    html.Url.revokeObjectUrl(url);
   }
 }

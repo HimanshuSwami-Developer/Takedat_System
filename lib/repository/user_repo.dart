@@ -10,6 +10,7 @@ import 'package:takedat_app/models/signed_document_model.dart';
 import 'package:takedat_app/models/users_model.dart';
 import 'package:takedat_app/models/act_certificate_model.dart';
 
+
 class UserRepository {
   final supabase = Supabase.instance.client;
 
@@ -37,18 +38,15 @@ class UserRepository {
     return response != null;
   }
 
-  Future<bool> hasSignedDocuments(
-  String userId,
-) async {
+  Future<bool> hasSignedDocuments(String userId) async {
+    final response = await supabase
+        .from('signed_documents')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-  final response = await supabase
-      .from('signed_documents')
-      .select('id')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-  return response != null;
-}
+    return response != null;
+  }
 
   /// ======================================================
   /// UPLOAD FILE
@@ -313,65 +311,59 @@ class UserRepository {
     return SignedDocumentsModel.fromJson(response);
   }
 
-
-
-// ======================================================
-  /// Manage Status 
+  // ======================================================
+  /// Manage Status
   /// ======================================================
 
- /// ======================================================
-/// GET USERS
-/// ======================================================
-Future<List<UserModel>> getUsers({
-  int page = 0,
-  int limit = 20,
-  String search = '',
-}) async {
+  /// ======================================================
+  /// GET USERS
+  /// ======================================================
+  Future<List<UserModel>> getUsers({
+    int page = 0,
+    int limit = 20,
+    String search = '',
+  }) async {
+    final from = page * limit;
 
-  final from = page * limit;
+    final to = from + limit - 1;
 
-  final to = from + limit - 1;
+    PostgrestFilterBuilder query = supabase
+        .from('users')
+        .select()
+        .eq("role", "user");
 
-  PostgrestFilterBuilder query = supabase
-      .from('users')
-      .select();
+    if (search.isNotEmpty) {
+      query = query.or(
+        'full_name.ilike.%$search%,'
+        'email.ilike.%$search%,'
+        'phone.ilike.%$search%,'
+        'emp_id.ilike.%$search%',
+      );
+    }
 
-  if (search.isNotEmpty) {
-    query = query.or(
-      'full_name.ilike.%$search%,'
-      'email.ilike.%$search%,'
-      'phone.ilike.%$search%,'
-      'emp_id.ilike.%$search%',
-    );
+    final response = await query
+        .order('created_at', ascending: false)
+        .range(from, to);
+
+    return (response as List).map((e) => UserModel.fromMap(e)).toList();
   }
 
-  final response = await query
-      .order('created_at', ascending: false)
-      .range(from, to);
+  /// ======================================================
+  /// UPDATE STATUS
+  /// ======================================================
 
-  return (response as List)
-      .map((e) => UserModel.fromMap(e))
-      .toList();
-}
+  Future<UserModel> updateUserStatus({
+    required String userId,
+    required bool isActive,
+  }) async {
+    final response = await supabase
+        .from('users')
+        .update({'is_active': isActive})
+        .eq('id', userId)
+        .select()
+        .single();
 
-/// ======================================================
-/// UPDATE STATUS
-/// ======================================================
-
-Future<UserModel> updateUserStatus({
-  required String userId,
-  required bool isActive,
-}) async {
-  final response = await supabase
-      .from('users')
-      .update({
-        'is_active': isActive,
-      })
-      .eq('id', userId)
-      .select()
-      .single();
-
-  return UserModel.fromMap(response);
-}
+    return UserModel.fromMap(response);
+  }
 
 }

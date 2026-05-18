@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:takedat_app/models/act_certificate_model.dart';
@@ -5,6 +8,10 @@ import 'package:takedat_app/models/sharecode_firstaid_model.dart';
 import 'package:takedat_app/models/sia_model.dart';
 import 'package:takedat_app/models/signed_document_model.dart';
 import 'package:takedat_app/models/users_model.dart';
+import 'dart:html' as html;
+
+import 'package:archive/archive.dart';
+import 'package:http/http.dart' as http;
 
 class EmployeeComplianceRepository {
 
@@ -87,6 +94,9 @@ class EmployeeComplianceRepository {
         .eq(
           'is_active',
           true,
+        ).eq(
+          'role',
+          'user',
         );
 
     /// =====================================================
@@ -563,4 +573,193 @@ class EmployeeComplianceRepository {
           id,
         );
   }
+
+
+    /// ======================================================
+  /// DOWNLOAD COMPLETE DOCUMENTS BUCKET
+  /// ======================================================
+ 
+  Future<void>
+      downloadDocumentsBucket() async {
+
+    /// ALL FILES
+    final List<Map<String, dynamic>>
+        allFiles = [];
+
+    /// ===================================================
+    /// FETCH FILES RECURSIVELY
+    /// ===================================================
+
+    Future<void> fetchFiles(
+      String path,
+    ) async {
+
+      final files = await supabase
+          .storage
+          .from('documents')
+          .list(
+            path: path,
+          );
+
+      for (final file in files) {
+
+        /// ===============================================
+        /// FOLDER
+        /// ===============================================
+
+        if (file.id == null) {
+
+          final folderPath =
+
+              path.isEmpty
+
+                  ? file.name
+
+                  : '$path/${file.name}';
+
+          await fetchFiles(
+            folderPath,
+          );
+        }
+
+        /// ===============================================
+        /// FILE
+        /// ===============================================
+
+        else {
+
+          allFiles.add({
+
+            'path':
+
+                path.isEmpty
+
+                    ? file.name
+
+                    : '$path/${file.name}',
+          });
+        }
+      }
+    }
+
+    /// START FETCH
+    await fetchFiles('');
+
+    if (allFiles.isEmpty) {
+
+      throw Exception(
+        "No files found in documents bucket",
+      );
+    }
+
+    /// ===================================================
+    /// CREATE ZIP
+    /// ===================================================
+
+    final archive = Archive();
+
+    for (final item in allFiles) {
+
+      try {
+
+        final path =
+            item['path'];
+
+        /// PUBLIC URL
+        final publicUrl =
+            supabase.storage
+                .from('documents')
+                .getPublicUrl(path);
+
+        /// DOWNLOAD FILE
+        final response =
+            await http.get(
+          Uri.parse(publicUrl),
+        );
+
+        if (response.statusCode == 200) {
+
+          archive.addFile(
+
+            ArchiveFile(
+
+              path,
+
+              response.bodyBytes.length,
+
+              response.bodyBytes,
+            ),
+          );
+        }
+      }
+
+      catch (e) {
+
+        debugPrint(
+          'ZIP FILE ERROR => $e',
+        );
+      }
+    }
+
+    /// ===================================================
+    /// ZIP ENCODE
+    /// ===================================================
+
+    final zipData =
+        ZipEncoder().encode(
+      archive,
+    );
+
+    /// ===================================================
+    /// DOWNLOAD ZIP
+    /// ===================================================
+
+    final bytes =
+        Uint8List.fromList(
+      zipData,
+    );
+
+    final blob = html.Blob(
+
+      [bytes],
+
+      'application/zip',
+    );
+
+    final url =
+        html.Url
+            .createObjectUrlFromBlob(
+      blob,
+    );
+
+    final timestamp =
+        DateTime.now()
+            .millisecondsSinceEpoch;
+
+    final fileName =
+        'employee_documents_$timestamp.zip';
+
+    final anchor =
+        html.AnchorElement(
+          href: url,
+        )
+
+          ..style.display = 'none'
+
+          ..download = fileName;
+
+    html.document.body
+        ?.children
+        .add(anchor);
+
+    /// DOWNLOAD
+    anchor.click();
+
+    /// CLEANUP
+    anchor.remove();
+
+    html.Url
+        .revokeObjectUrl(url);
+  }
+
 }

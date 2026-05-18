@@ -56,6 +56,55 @@ class _ContractorScreenState extends State<ContractorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: "contractor_csv",
+
+        backgroundColor: AppColors.primary,
+
+        elevation: 2,
+
+        onPressed: () async {
+          try {
+            await _bloc.repository.exportContractorCsv();
+
+            if (!context.mounted) return;
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                behavior: SnackBarBehavior.floating,
+
+                backgroundColor: Colors.green,
+
+                content: Text(
+                  "CSV downloaded successfully",
+
+                  style: AppTextStyles.label.copyWith(color: Colors.white),
+                ),
+              ),
+            );
+          } catch (e) {
+            if (!context.mounted) return;
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                behavior: SnackBarBehavior.floating,
+
+                backgroundColor: Colors.red,
+
+                content: Text(e.toString()),
+              ),
+            );
+          }
+        },
+
+        icon: const Icon(Icons.download_rounded, color: Colors.white),
+
+        label: Text(
+          "Export CSV",
+
+          style: AppTextStyles.label.copyWith(color: Colors.white),
+        ),
+      ),
       backgroundColor: const Color(0xFFF3F5F2),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -195,7 +244,7 @@ class _ContractorScreenState extends State<ContractorScreen> {
                                     contractor: contractor,
                                     onEdit: () =>
                                         _openEditSheet(context, contractor),
-                                   onDelete: () => _confirmDelete(contractor),
+                                    onDelete: () => _confirmDelete(contractor),
                                   ),
                                 ),
                                 if (state is ContractorLoaded && state.hasMore)
@@ -502,7 +551,7 @@ class _ContractorScreenState extends State<ContractorScreen> {
                     label: "Date Of Pay",
                     hint: "Select Pay Date",
                     icon: Icons.calendar_today,
-                     initialDate: tempDate,
+                    initialDate: tempDate,
                     onDateSelected: (date) {
                       setSheetState(() => tempDate = date);
                     },

@@ -69,10 +69,6 @@ Future<UserModel> adminLogin({
   /// SEND EMAIL OTP
   /// =========================
 
-  /// =========================
-  /// SEND EMAIL OTP
-  /// =========================
-
   Future<void> sendOtp({
     required String email,
     required Function(String verificationId) codeSent,
@@ -93,7 +89,7 @@ Future<UserModel> adminLogin({
     await supabase.auth.signInWithOtp(
       email: email,
       emailRedirectTo: null,
-      shouldCreateUser: false,
+      shouldCreateUser: true,
     );
 
     codeSent(email);

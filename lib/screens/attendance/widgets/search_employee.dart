@@ -104,7 +104,7 @@ class _EmployeeSearchFieldState extends State<EmployeeSearchField> {
       final response = await Supabase.instance.client
           .from('users')
           .select('id, full_name, email')
-          .eq("is_active", true)
+          .eq("is_active", true).eq("role", "user")
           .ilike('full_name', '%$query%')
           .limit(8);
 

@@ -917,14 +917,7 @@ void _openFilterSheet(BuildContext screenCtx) {
                 isSelected: current == 'paid',
                 onTap: () => Navigator.of(pickerContext).pop('paid'),
               ),
-              const SizedBox(height: 8),
-              _StatusOption(
-                label: "Cancelled",
-                icon: Icons.cancel_rounded,
-                color: const Color(0xFFEF4444),
-                isSelected: current == 'cancelled',
-                onTap: () => Navigator.of(pickerContext).pop('cancelled'),
-              ),
+             
             ],
           ),
         );

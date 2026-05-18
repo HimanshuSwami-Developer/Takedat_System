@@ -8,6 +8,7 @@ import 'package:takedat_app/core/app_text.dart';
 
 import 'package:takedat_app/models/attendance_model.dart';
 import 'package:takedat_app/models/shift_model.dart';
+import 'package:takedat_app/repository/attendance_repo.dart';
 
 import 'package:takedat_app/screens/attendance/bloc/attendance_bloc.dart';
 import 'package:takedat_app/screens/attendance/bloc/attendance_event.dart';
@@ -45,10 +46,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         filterStatus != null;
   }
 
+  late final AttendanceRepository attendanceRepository;
+
   @override
   void initState() {
     super.initState();
-
+    attendanceRepository = AttendanceRepository();
     attendanceBloc = context.read<AttendanceBloc>()
       ..add(LoadShiftsEvent())
       ..add(LoadAttendanceEvent());
@@ -123,7 +126,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       child: IconButton(
                         icon: Icon(
                           Icons.filter_list,
-                          color: hasActiveFilter ? AppColors.primary : Colors.black,
+                          color: hasActiveFilter
+                              ? AppColors.primary
+                              : Colors.black,
                         ),
 
                         onPressed: () => _openFilterSheet(context),
@@ -169,7 +174,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
                         isFullWidth: false,
 
-                        onTap: () {},
+                        onTap: () async {
+                          await attendanceRepository.exportAttendanceCsv();
+                        },
                       ),
                     ),
 
@@ -338,164 +345,181 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   /// FILTER SHEET
   /// ===============================================
 
-void _openFilterSheet(BuildContext context) {
-  DateTime? tempStartDate = filterStartDate;
-  DateTime? tempEndDate = filterEndDate;
-  String? tempStatus = filterStatus;
+  void _openFilterSheet(BuildContext context) {
+    DateTime? tempStartDate = filterStartDate;
+    DateTime? tempEndDate = filterEndDate;
+    String? tempStatus = filterStatus;
 
-  // ✅ Capture bloc reference before entering the sheet's builder
-  final bloc = context.read<AttendanceBloc>();
+    // ✅ Capture bloc reference before entering the sheet's builder
+    final bloc = context.read<AttendanceBloc>();
 
-  showModalBottomSheet(
-    context: context,
-    useSafeArea: true,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (sheetContext) {
-      return StatefulBuilder( // ✅ Required for local state inside the sheet
-        builder: (builderContext, setSheetState) {
-          return DraggableScrollableSheet(
-            initialChildSize: 0.65,
-            maxChildSize: 0.65,
-            minChildSize: 0.65,
-            expand: false,
-            builder: (_, scrollController) {
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                child: Column(
-                  children: [
-                    // HANDLE
-                    Container(
-                      height: 4,
-                      width: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade400,
-                        borderRadius: BorderRadius.circular(10),
+    showModalBottomSheet(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          // ✅ Required for local state inside the sheet
+          builder: (builderContext, setSheetState) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.65,
+              maxChildSize: 0.65,
+              minChildSize: 0.65,
+              expand: false,
+              builder: (_, scrollController) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      // HANDLE
+                      Container(
+                        height: 4,
+                        width: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade400,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 12),
+                      const SizedBox(height: 12),
 
-                    // HEADER
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Filter Attendance",
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 16,
-                                color: Colors.black,
-                              ),
-                            ),
-                            Text(
-                              "Refine your search results",
-                              style: AppTextStyles.small.copyWith(
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ],
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(sheetContext), // ✅ use sheetContext
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // FORM
-                    Expanded(
-                      child: ListView(
-                        controller: scrollController,
+                      // HEADER
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          CustomDateField(
-                            label: "Start Shift",
-                            hint: "Select start date",
-                            icon: Icons.calendar_today,
-                            showTime: true,
-                            onDateSelected: (value) {
-                              setSheetState(() => tempStartDate = value); // ✅ use setSheetState
-                            },
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Filter Attendance",
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 16,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              Text(
+                                "Refine your search results",
+                                style: AppTextStyles.small.copyWith(
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ],
                           ),
-                          CustomDateField(
-                            label: "End Shift",
-                            hint: "Select end date",
-                            icon: Icons.calendar_today,
-                            showTime: true,
-                            onDateSelected: (value) {
-                              setSheetState(() => tempEndDate = value); // ✅
-                            },
+                          IconButton(
+                            onPressed: () => Navigator.pop(
+                              sheetContext,
+                            ), // ✅ use sheetContext
+                            icon: const Icon(Icons.close),
                           ),
-                          CustomDropdown<String>(
-                            label: "Status",
-                            hint: "Select status",
-                            icon: Icons.filter_alt,
-                            items: const ["present", "absent", "half_day"],
-                            onChanged: (value) {
-                              setSheetState(() => tempStatus = value); // ✅
-                            },
-                          ),
-                          const SizedBox(height: 20),
                         ],
                       ),
-                    ),
 
-                    // ACTIONS
-                    Row(
-                      children: [
-                        Expanded(
-                          child: CustomOutlinedButton(
-                            text: "Reset",
-                            onTap: () {
-                              setState(() { // ✅ outer setState for the screen
-                                filterStartDate = null;
-                                filterEndDate = null;
-                                filterStatus = null;
-                              });
-                              bloc.add(FilterAttendanceEvent()); // ✅ captured bloc
-                              Navigator.pop(sheetContext);       // ✅ correct context
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: CustomButton(
-                            text: "Apply Filter",
-                            onTap: () {
-                              setState(() { // ✅ outer setState
-                                filterStartDate = tempStartDate;
-                                filterEndDate = tempEndDate;
-                                filterStatus = tempStatus;
-                              });
-                              bloc.add(FilterAttendanceEvent(
-                                startDate: tempStartDate,
-                                endDate: tempEndDate,
-                                status: tempStatus,
-                              ));
-                              Navigator.pop(sheetContext); // ✅ correct context
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+                      const SizedBox(height: 10),
 
-                    const SizedBox(height: 10),
-                  ],
-                ),
-              );
-            },
-          );
-        },
-      );
-    },
-  );
-}
+                      // FORM
+                      Expanded(
+                        child: ListView(
+                          controller: scrollController,
+                          children: [
+                            CustomDateField(
+                              label: "Start Shift",
+                              hint: "Select start date",
+                              icon: Icons.calendar_today,
+                              showTime: true,
+                              onDateSelected: (value) {
+                                setSheetState(
+                                  () => tempStartDate = value,
+                                ); // ✅ use setSheetState
+                              },
+                            ),
+                            CustomDateField(
+                              label: "End Shift",
+                              hint: "Select end date",
+                              icon: Icons.calendar_today,
+                              showTime: true,
+                              onDateSelected: (value) {
+                                setSheetState(() => tempEndDate = value); // ✅
+                              },
+                            ),
+                            CustomDropdown<String>(
+                              label: "Status",
+                              hint: "Select status",
+                              icon: Icons.filter_alt,
+                              items: const ["present", "absent", "half_day"],
+                              onChanged: (value) {
+                                setSheetState(() => tempStatus = value); // ✅
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
+                      ),
+
+                      // ACTIONS
+                      Row(
+                        children: [
+                          Expanded(
+                            child: CustomOutlinedButton(
+                              text: "Reset",
+                              onTap: () {
+                                setState(() {
+                                  // ✅ outer setState for the screen
+                                  filterStartDate = null;
+                                  filterEndDate = null;
+                                  filterStatus = null;
+                                });
+                                bloc.add(
+                                  FilterAttendanceEvent(),
+                                ); // ✅ captured bloc
+                                Navigator.pop(
+                                  sheetContext,
+                                ); // ✅ correct context
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: CustomButton(
+                              text: "Apply Filter",
+                              onTap: () {
+                                setState(() {
+                                  // ✅ outer setState
+                                  filterStartDate = tempStartDate;
+                                  filterEndDate = tempEndDate;
+                                  filterStatus = tempStatus;
+                                });
+                                bloc.add(
+                                  FilterAttendanceEvent(
+                                    startDate: tempStartDate,
+                                    endDate: tempEndDate,
+                                    status: tempStatus,
+                                  ),
+                                );
+                                Navigator.pop(
+                                  sheetContext,
+                                ); // ✅ correct context
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 10),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
 }
