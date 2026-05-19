@@ -29,7 +29,7 @@ dependencies:
   pdf: ^3.10.8
   archive: ^4.0.9
   printing: ^5.12.0
-  
+  flutter_image_compress: ^2.3.0
 
 dev_dependencies:
   flutter_test:

@@ -244,52 +244,52 @@ class _OCRDocumentCardState extends State<OCRDocumentCard> {
       /// EXPIRED DOCUMENT CHECK
       /// =====================================================
 
-      // if (parsedExpiry != null) {
-      //   final now = DateTime.now();
+      if (parsedExpiry != null) {
+        final now = DateTime.now();
 
-      //   final today = DateTime(now.year, now.month, now.day);
+        final today = DateTime(now.year, now.month, now.day);
 
-      //   final expiry = DateTime(
-      //     parsedExpiry.year,
-      //     parsedExpiry.month,
-      //     parsedExpiry.day,
-      //   );
+        final expiry = DateTime(
+          parsedExpiry.year,
+          parsedExpiry.month,
+          parsedExpiry.day,
+        );
 
-      //   /// EXPIRED OR TODAY
-      //   if (expiry.isBefore(today) || expiry.isAtSameMomentAs(today)) {
-      //     setState(() {
-      //       /// RESET EVERYTHING
-      //       uploaded = false;
+        /// EXPIRED OR TODAY
+        if (expiry.isBefore(today) || expiry.isAtSameMomentAs(today)) {
+          setState(() {
+            /// RESET EVERYTHING
+            uploaded = false;
 
-      //       isLoading = false;
+            isLoading = false;
 
-      //       selectedImage = null;
+            selectedImage = null;
 
-      //       webImage = null;
+            webImage = null;
 
-      //       documentNumber = '';
+            documentNumber = '';
 
-      //       expiryDate = '';
+            expiryDate = '';
 
-      //       holderName = '';
+            holderName = '';
 
-      //       fileName = '';
-      //     });
+            fileName = '';
+          });
 
-      //     AppUtils.showDialogMessage(
-      //       context,
+          AppUtils.showDialogMessage(
+            context,
 
-      //       title: "Document Expired",
+            title: "Document Expired",
 
-      //       message:
-      //           "${widget.title} has expired. Please upload a valid document.",
+            message:
+                "${widget.title} has expired. Please upload a valid document.",
 
-      //       buttonText: "Upload Again",
-      //     );
+            buttonText: "Upload Again",
+          );
 
-      //     return;
-      //   }
-      // }
+          return;
+        }
+      }
 
       // ── Fire callback — web AND mobile ────────────────────
 

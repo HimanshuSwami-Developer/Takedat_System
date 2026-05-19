@@ -1,1 +1,36 @@
-{"hosting":{"public":"build/web","ignore":["firebase.json","**/.*","**/node_modules/**"],"rewrites":[{"source":"**","destination":"/index.html"}]},"flutter":{"platforms":{"android":{"default":{"projectId":"takedat-919ed","appId":"1:174664044431:android:c62a00dd8c6ee7df3685fa","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"takedat-919ed","configurations":{"android":"1:174664044431:android:c62a00dd8c6ee7df3685fa","web":"1:174664044431:web:038889cca973834e3685fa"}}}}}}
+{
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "takedat-919ed",
+          "appId": "1:174664044431:android:c62a00dd8c6ee7df3685fa",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "takedat-919ed",
+          "configurations": {
+            "android": "1:174664044431:android:c62a00dd8c6ee7df3685fa",
+            "web": "1:174664044431:web:038889cca973834e3685fa"
+          }
+        }
+      }
+    }
+  }
+}
