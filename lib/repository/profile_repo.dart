@@ -1,19 +1,20 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:takedat_app/models/sharecode_firstaid_model.dart';
 import 'package:takedat_app/models/sia_model.dart';
+import 'dart:html' as html;
+import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
+import 'package:http/http.dart' as http;
 import '../models/act_certificate_model.dart';
 
 class ProfileRepository {
-  final SupabaseClient _client =
-      Supabase.instance.client;
+  final SupabaseClient _client = Supabase.instance.client;
 
   /// ==============================
   /// GET USER PROFILE
   /// ==============================
-  Future<Map<String, dynamic>> getProfile({
-    required String userId,
-  }) async {
+  Future<Map<String, dynamic>> getProfile({required String userId}) async {
     try {
       /// USER TABLE
       final userData = await _client
@@ -46,32 +47,20 @@ class ProfileRepository {
       return {
         "user": userData,
 
-        "actCertificate":
-            actData != null
-                ? ActCertificateModel.fromJson(
-                    actData,
-                  )
-                : null,
+        "actCertificate": actData != null
+            ? ActCertificateModel.fromJson(actData)
+            : null,
 
-        "sharecodeFirstAid":
-            shareCodeData != null
-                ? SharecodeFirstAidModel
-                    .fromJson(
-                    shareCodeData,
-                  )
-                : null,
+        "sharecodeFirstAid": shareCodeData != null
+            ? SharecodeFirstAidModel.fromJson(shareCodeData)
+            : null,
 
-        "siaLicence":
-            siaData != null
-                ? SiaLicenceModel.fromJson(
-                    siaData,
-                  )
-                : null,
+        "siaLicence": siaData != null
+            ? SiaLicenceModel.fromJson(siaData)
+            : null,
       };
     } catch (e) {
-      throw Exception(
-        "Failed to fetch profile : $e",
-      );
+      throw Exception("Failed to fetch profile : $e");
     }
   }
 
@@ -79,62 +68,45 @@ class ProfileRepository {
   /// UPDATE ACT CERTIFICATE
   /// ==============================
   Future<void> updateActCertificate({
-    required ActCertificateModel
-        model,
+    required ActCertificateModel model,
   }) async {
     try {
       await _client
           .from('act_certificate')
-          .update(
-            model.toJson(),
-          )
+          .update(model.toJson())
           .eq('id', model.id!);
     } catch (e) {
-      throw Exception(
-        "Failed to update act certificate : $e",
-      );
+      throw Exception("Failed to update act certificate : $e");
     }
   }
 
   /// ==============================
   /// UPDATE SHARECODE + FIRSTAID
   /// ==============================
-  Future<void>
-      updateSharecodeFirstAid({
-    required SharecodeFirstAidModel
-        model,
+  Future<void> updateSharecodeFirstAid({
+    required SharecodeFirstAidModel model,
   }) async {
     try {
       await _client
           .from('sharecode_first_aid')
-          .update(
-            model.toJson(),
-          )
+          .update(model.toJson())
           .eq('id', model.id!);
     } catch (e) {
-      throw Exception(
-        "Failed to update sharecode/first aid : $e",
-      );
+      throw Exception("Failed to update sharecode/first aid : $e");
     }
   }
 
   /// ==============================
   /// UPDATE SIA LICENCE
   /// ==============================
-  Future<void> updateSiaLicence({
-    required SiaLicenceModel model,
-  }) async {
+  Future<void> updateSiaLicence({required SiaLicenceModel model}) async {
     try {
       await _client
           .from('sia_licence')
-          .update(
-            model.toJson(),
-          )
+          .update(model.toJson())
           .eq('id', model.id!);
     } catch (e) {
-      throw Exception(
-        "Failed to update sia licence : $e",
-      );
+      throw Exception("Failed to update sia licence : $e");
     }
   }
 
@@ -161,9 +133,76 @@ class ProfileRepository {
           })
           .eq('id', userId);
     } catch (e) {
-      throw Exception(
-        "Failed to update user profile : $e",
-      );
+      throw Exception("Failed to update user profile : $e");
+    }
+  }
+
+  Future<void> downloadUserFolder({
+    required String userEmail,
+    required Function(double progress, String message) onProgress,
+  }) async {
+    try {
+      /// GET FILES
+      final files = await _client.storage
+          .from('documents')
+          .list(path: userEmail);
+
+      if (files.isEmpty) {
+        throw Exception("No files found");
+      }
+
+      final archive = Archive();
+
+      /// DOWNLOAD FILES
+      for (int i = 0; i < files.length; i++) {
+        final file = files[i];
+
+        onProgress(i / files.length, "Downloading ${file.name}");
+
+        final filePath = "$userEmail/${file.name}";
+
+        final url = _client.storage.from('documents').getPublicUrl(filePath);
+
+        final response = await http.get(Uri.parse(url));
+
+        if (response.statusCode == 200) {
+          archive.addFile(
+            ArchiveFile(
+              file.name,
+              response.bodyBytes.length,
+              response.bodyBytes,
+            ),
+          );
+        }
+      }
+
+      /// ZIP CREATION
+      onProgress(0.9, "Creating ZIP...");
+
+      final zipData = ZipEncoder().encode(archive);
+
+      if (zipData == null) {
+        throw Exception("ZIP failed");
+      }
+
+      final bytes = Uint8List.fromList(zipData);
+
+      final blob = html.Blob([bytes]);
+
+      final downloadUrl = html.Url.createObjectUrlFromBlob(blob);
+
+      final anchor = html.AnchorElement(href: downloadUrl)
+        ..setAttribute("download", "${userEmail}_documents.zip")
+        ..click();
+
+      /// IMPORTANT FIX
+      await Future.delayed(const Duration(milliseconds: 700));
+
+      html.Url.revokeObjectUrl(downloadUrl);
+
+      onProgress(1, "Download Completed");
+    } catch (e) {
+      throw Exception("Folder download failed : $e");
     }
   }
 }

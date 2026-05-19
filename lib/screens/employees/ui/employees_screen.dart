@@ -242,44 +242,34 @@ class _EmployeeComplianceScreenState extends State<EmployeeComplianceScreen> {
   }
 }
 
-
 /// ======================================================
 /// DOWNLOAD DIALOG
 /// ======================================================
 
-class _DownloadDialog
-    extends StatefulWidget {
-
+class _DownloadDialog extends StatefulWidget {
   const _DownloadDialog();
 
   @override
-  State<_DownloadDialog> createState() =>
-      _DownloadDialogState();
+  State<_DownloadDialog> createState() => _DownloadDialogState();
 }
 
-class _DownloadDialogState
-    extends State<_DownloadDialog>
+class _DownloadDialogState extends State<_DownloadDialog>
     with SingleTickerProviderStateMixin {
-
   late AnimationController controller;
 
   @override
   void initState() {
-
     super.initState();
 
     controller = AnimationController(
-
       vsync: this,
 
-      duration:
-          const Duration(seconds: 2),
+      duration: const Duration(seconds: 2),
     )..repeat();
   }
 
   @override
   void dispose() {
-
     controller.dispose();
 
     super.dispose();
@@ -287,62 +277,43 @@ class _DownloadDialogState
 
   @override
   Widget build(BuildContext context) {
-
     return Dialog(
-
-      backgroundColor:
-          Colors.transparent,
+      backgroundColor: Colors.transparent,
 
       child: Container(
-
-        padding:
-            const EdgeInsets.all(24),
+        width: 400,
+        padding: const EdgeInsets.all(24),
 
         decoration: BoxDecoration(
-
           color: Colors.white,
 
-          borderRadius:
-              BorderRadius.circular(
-            28,
-          ),
+          borderRadius: BorderRadius.circular(28),
         ),
 
         child: Column(
-
-          mainAxisSize:
-              MainAxisSize.min,
+          mainAxisSize: MainAxisSize.min,
 
           children: [
-
             /// ICON
             RotationTransition(
-
               turns: controller,
 
               child: Container(
-
                 height: 80,
                 width: 80,
 
-                decoration:
-                    const BoxDecoration(
+                decoration: const BoxDecoration(
+                  color: Color(0x1400C57B),
 
-                  color:
-                      Color(0x1400C57B),
-
-                  shape:
-                      BoxShape.circle,
+                  shape: BoxShape.circle,
                 ),
 
                 child: const Icon(
-
                   Icons.folder_zip_rounded,
 
                   size: 42,
 
-                  color:
-                      Color(0xFF00C57B),
+                  color: Color(0xFF00C57B),
                 ),
               ),
             ),
@@ -350,73 +321,44 @@ class _DownloadDialogState
             const SizedBox(height: 24),
 
             const Text(
-
               "Preparing Documents",
 
-              style: TextStyle(
-
-                fontSize: 18,
-
-                fontWeight:
-                    FontWeight.w700,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
 
             const SizedBox(height: 10),
 
             Text(
-
               "Downloading and compressing employee files...",
 
-              textAlign:
-                  TextAlign.center,
+              textAlign: TextAlign.center,
 
-              style: TextStyle(
-
-                color:
-                    Colors.grey.shade600,
-
-                height: 1.5,
-              ),
+              style: TextStyle(color: Colors.grey.shade600, height: 1.5),
             ),
 
             const SizedBox(height: 24),
 
             ClipRRect(
+              borderRadius: BorderRadius.circular(30),
 
-              borderRadius:
-                  BorderRadius.circular(
-                30,
-              ),
-
-              child:
-                  const LinearProgressIndicator(
-
+              child: const LinearProgressIndicator(
                 minHeight: 10,
 
-                backgroundColor:
-                    Color(0xFFEAEAEA),
+                backgroundColor: Color(0xFFEAEAEA),
 
-                valueColor:
-                    AlwaysStoppedAnimation(
-                  Color(0xFF00C57B),
-                ),
+                valueColor: AlwaysStoppedAnimation(Color(0xFF00C57B)),
               ),
             ),
 
             const SizedBox(height: 16),
 
             const Text(
-
               "Please wait...",
 
               style: TextStyle(
+                fontWeight: FontWeight.w600,
 
-                fontWeight:
-                    FontWeight.w600,
-
-                color:
-                    Color(0xFF00C57B),
+                color: Color(0xFF00C57B),
               ),
             ),
           ],

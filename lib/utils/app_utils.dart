@@ -223,6 +223,7 @@ class AppUtils {
           insetPadding: const EdgeInsets.symmetric(horizontal: 24),
 
           child: Container(
+            width: 420,
             padding: const EdgeInsets.all(24),
 
             decoration: BoxDecoration(

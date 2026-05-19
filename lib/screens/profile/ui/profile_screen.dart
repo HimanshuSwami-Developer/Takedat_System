@@ -3,10 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:takedat_app/constant/session_keys.dart';
 import 'package:takedat_app/constant/session_manager.dart';
+import 'package:takedat_app/core/app_colors.dart';
 
 import 'package:takedat_app/models/act_certificate_model.dart';
 import 'package:takedat_app/models/sharecode_firstaid_model.dart';
 import 'package:takedat_app/models/sia_model.dart';
+import 'package:takedat_app/repository/profile_repo.dart';
+import 'package:takedat_app/screens/auth/widget/custom_button.dart';
 
 import 'package:takedat_app/screens/auth/widget/ocr_documents.dart';
 import 'package:takedat_app/screens/profile/bloc/profile_bloc.dart';
@@ -24,6 +27,9 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final primaryGreen = const Color(0xff006B43);
 
+  double downloadProgress = 0;
+  String downloadMessage = "";
+  bool isDownloading = false;
   String userId = '';
   String userEmail = '';
 
@@ -223,38 +229,289 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
 
                   const SizedBox(height: 20),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 46,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: primaryGreen),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: () {},
-                      icon: Icon(
-                        Icons.menu_book_outlined,
-                        size: 18,
-                        color: primaryGreen,
-                      ),
-                      label: Text(
-                        "Download Employee Documents",
-                        style: TextStyle(
-                          color: primaryGreen,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
           );
         },
+      ),
+      floatingActionButton: SizedBox(
+        height: 45,
+        width: 150,
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryGreen,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          icon: Icon(Icons.download),
+          label: Text("Export Docs"),
+          onPressed: () async {
+            if (isDownloading) return;
+            setState(() => isDownloading = true);
+
+            double _progress = 0.0;
+            String _message = "Preparing your documents...";
+            bool _isSuccess = false;
+            bool _isFailed = false;
+            String _errorText = "";
+
+            final dialogKey = GlobalKey<State>();
+
+            void _updateDialog(double p, String m) {
+              if (dialogKey.currentState?.mounted ?? false) {
+                dialogKey.currentState!.setState(() {
+                  _progress = p;
+                  _message = m;
+                });
+              }
+            }
+
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (dialogContext) {
+                return PopScope(
+                  canPop: false,
+                  child: StatefulBuilder(
+                    key: dialogKey,
+                    builder: (ctx, setDialogState) {
+                      return AlertDialog(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        contentPadding: const EdgeInsets.fromLTRB(
+                          24,
+                          8,
+                          24,
+                          24,
+                        ),
+                        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+                        title: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: primaryGreen.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                _isFailed
+                                    ? Icons.error_outline_rounded
+                                    : _isSuccess
+                                    ? Icons.check_circle_outline_rounded
+                                    : Icons.cloud_download_outlined,
+                                color: _isFailed
+                                    ? Colors.redAccent
+                                    : primaryGreen,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                _isFailed
+                                    ? "Download Failed"
+                                    : _isSuccess
+                                    ? "Download Complete"
+                                    : "Downloading Documents",
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        content: SizedBox(
+                          width: 300,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Divider(color: Colors.white12, height: 1),
+                              const SizedBox(height: 20),
+
+                              // Progress bar
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(100),
+                                child: LinearProgressIndicator(
+                                  value: _isFailed ? 1.0 : _progress,
+                                  minHeight: 6,
+                                  backgroundColor: Colors.white54,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    _isFailed ? Colors.redAccent : primaryGreen,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Percentage + spinner row
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    _isFailed
+                                        ? "0%"
+                                        : "${(_progress * 100).toInt()}%",
+                                    style: TextStyle(
+                                      color: _isFailed
+                                          ? Colors.redAccent
+                                          : primaryGreen,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 22,
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                  if (!_isSuccess && !_isFailed)
+                                    SizedBox(
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: primaryGreen.withOpacity(0.7),
+                                      ),
+                                    ),
+                                  if (_isSuccess)
+                                    const Icon(
+                                      Icons.check_circle_rounded,
+                                      color: Colors.greenAccent,
+                                      size: 20,
+                                    ),
+                                  if (_isFailed)
+                                    const Icon(
+                                      Icons.cancel_rounded,
+                                      color: Colors.redAccent,
+                                      size: 20,
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+
+                              // Status message
+                              Text(
+                                _isFailed ? _errorText : _message,
+                                style: TextStyle(
+                                  color: _isFailed
+                                      ? Colors.redAccent.withOpacity(0.85)
+                                      : primaryGreen,
+                                  fontSize: 12.5,
+                                  height: 1.4,
+                                ),
+                              ),
+
+                              // Close button shown only on terminal states
+                              if (_isSuccess || _isFailed) ...[
+                                const SizedBox(height: 20),
+                                const Divider(color: Colors.black, height: 1),
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: TextButton(
+                                    style: TextButton.styleFrom(
+                                      backgroundColor: _isFailed
+                                          ? Colors.redAccent.withOpacity(0.12)
+                                          : primaryGreen.withOpacity(0.12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 10,
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      if (dialogContext.mounted) {
+                                        Navigator.of(dialogContext).pop();
+                                      }
+                                    },
+                                    child: Text(
+                                      "Close",
+                                      style: TextStyle(
+                                        color: _isFailed
+                                            ? Colors.redAccent
+                                            : primaryGreen,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            );
+
+            try {
+              await ProfileRepository().downloadUserFolder(
+                userEmail: userEmail,
+                onProgress: (p, m) {
+                  if (dialogKey.currentState?.mounted ?? false) {
+                    dialogKey.currentState!.setState(() {
+                      _progress = p;
+                      _message = m;
+                    });
+                  }
+                },
+              );
+
+              // Mark success inside dialog
+              if (dialogKey.currentState?.mounted ?? false) {
+                dialogKey.currentState!.setState(() {
+                  _progress = 1.0;
+                  _isSuccess = true;
+                  _message = "All documents saved to your device.";
+                });
+              }
+
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor:AppColors.primary,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    content: Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle_rounded,
+                          color: primaryGreen,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 10),
+                        const Text(
+                          "Documents downloaded successfully",
+                          style: TextStyle(color:Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+            } catch (e) {
+              // Mark failure inside dialog
+              if (dialogKey.currentState?.mounted ?? false) {
+                dialogKey.currentState!.setState(() {
+                  _isFailed = true;
+                  _errorText = e.toString();
+                });
+              }
+            } finally {
+              setState(() => isDownloading = false);
+            }
+          },
+        ),
       ),
     );
   }
@@ -291,7 +548,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Stack(
                 children: [
@@ -327,20 +585,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       user['full_name'] ?? '',
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 4),
                     Text(
                       user['emp_id'] ?? '',
                       style: TextStyle(
                         color: Colors.grey.shade600,
-                        fontSize: 11,
+                        fontSize: 14,
                       ),
                     ),
                   ],
@@ -622,13 +881,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Text(
                 title,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 10),
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
               ),
