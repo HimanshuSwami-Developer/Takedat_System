@@ -782,7 +782,7 @@ void _openFilterSheet(BuildContext screenCtx) {
                         Expanded(
                           child: CustomTextField(
                             controller: cashController,
-                            label: "Cash (\$)",
+                            label: "Payment I (£)",
                             hint: "0.00",
                             icon: Icons.payments_outlined,
                           ),
@@ -791,7 +791,7 @@ void _openFilterSheet(BuildContext screenCtx) {
                         Expanded(
                           child: CustomTextField(
                             controller: niController,
-                            label: "NI (\$)",
+                            label: "Payment II (£)",
                             hint: "0.00",
                             icon: Icons.payments_outlined,
                           ),
@@ -801,7 +801,7 @@ void _openFilterSheet(BuildContext screenCtx) {
                     const SizedBox(height: 12),
                     CustomTextField(
                       controller: expenseController,
-                      label: "Expense (\$)",
+                      label: "Expense (£)",
                       hint: "0.00",
                       icon: Icons.receipt_long,
                     ),

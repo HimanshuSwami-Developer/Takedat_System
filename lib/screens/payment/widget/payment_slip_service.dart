@@ -171,15 +171,15 @@ class PaymentSlipService {
 
                   /// CASH
                   _tableRow(
-                    "Cash Payment",
-                    "\$${cashPayment.toStringAsFixed(2)}",
+                    "Payment I",
+                    "£${cashPayment.toStringAsFixed(2)}",
                   ),
 
                   /// NI
-                  _tableRow("NI Payment", "\$${niPayment.toStringAsFixed(2)}"),
+                  _tableRow("Payment II", "£${niPayment.toStringAsFixed(2)}"),
 
                   /// EXPENSE
-                  _tableRow("Expense", "\$${expense.toStringAsFixed(2)}"),
+                  _tableRow("Expense", "£${expense.toStringAsFixed(2)}"),
 
                   /// TOTAL
                   pw.TableRow(
@@ -190,7 +190,7 @@ class PaymentSlipService {
                     children: [
                       _tableBold("TOTAL"),
 
-                      _tableBold("\$${total.toStringAsFixed(2)}"),
+                      _tableBold("£${total.toStringAsFixed(2)}"),
                     ],
                   ),
                 ],

@@ -220,12 +220,12 @@ class PaymentCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _InfoCard(
-                        title: "Cash / NI",
+                        title: "Payment I / Payment II",
 
                         icon: Icons.payments_outlined,
 
                         value: _hasPayment
-                            ? "\$${payment.cashPayment.toStringAsFixed(2)}  /  \$${payment.niPayment.toStringAsFixed(2)}"
+                            ? "£${payment.cashPayment.toStringAsFixed(2)}  /  £${payment.niPayment.toStringAsFixed(2)}"
                             : "—",
                       ),
                     ),
@@ -239,7 +239,7 @@ class PaymentCard extends StatelessWidget {
                         icon: Icons.receipt_long_outlined,
 
                         value: _hasPayment
-                            ? "\$${payment.expense.toStringAsFixed(2)}"
+                            ? "£${payment.expense.toStringAsFixed(2)}"
                             : "—",
                       ),
                     ),
@@ -276,7 +276,7 @@ class PaymentCard extends StatelessWidget {
                       ),
 
                       Text(
-                        _hasPayment ? "\$${total.toStringAsFixed(2)}" : "—",
+                        _hasPayment ? "£${total.toStringAsFixed(2)}" : "—",
 
                         style: AppTextStyles.headline.copyWith(
                           color: AppColors.primary,
