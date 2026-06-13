@@ -513,7 +513,7 @@ class _SignDocumentsStepState
                   color:
                       signed
 
-                          ? Colors.green
+                          ? AppColors.primary
                               .withOpacity(
                             0.1,
                           )
@@ -539,7 +539,7 @@ class _SignDocumentsStepState
 
                       signed
 
-                          ? Colors.green
+                          ? AppColors.primary
 
                           : Colors.black54,
                 ),
@@ -577,12 +577,12 @@ class _SignDocumentsStepState
 
                       signed
 
-                          ? Colors.green
+                          ? AppColors.primary
                               .withOpacity(
                             0.1,
                           )
 
-                          : Colors.red
+                          : AppColors.tertiary
                               .withOpacity(
                             0.1,
                           ),
@@ -605,8 +605,8 @@ class _SignDocumentsStepState
 
                     color:
                         signed
-                            ? Colors.green
-                            : Colors.red,
+                            ? AppColors.primary
+                            : AppColors.tertiary,
 
                     fontSize: 10,
                   ),
