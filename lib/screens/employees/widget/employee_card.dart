@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:takedat_app/core/app_colors.dart';
 
 import 'package:takedat_app/screens/employees/bloc/employee_compliance_state.dart';
 
@@ -30,9 +31,7 @@ class EmployeeComplianceCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
 
         border: Border.all(
-          color: employee.isExpanded
-              ? const Color(0xFF00C57B)
-              : Colors.grey.shade100,
+          color:Colors.grey.shade100,
 
           width: 1.2,
         ),
@@ -72,7 +71,7 @@ class EmployeeComplianceCard extends StatelessWidget {
 
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF00C57B), Color(0xFF00A86B)],
+                        colors: [AppColors.primary,AppColors.tertiary],
                       ),
 
                       borderRadius: BorderRadius.circular(16),

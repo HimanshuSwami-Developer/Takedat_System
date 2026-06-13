@@ -292,23 +292,18 @@ class MainLayout extends StatelessWidget {
         children: [
           /// LOGO
           Container(
-            height: 90,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 0,
+                        ),
+                        child: Image.asset(
+                          'assets/logo.webp',
+                          width: 100,
+                          height: 88,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
 
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-
-            alignment: Alignment.centerLeft,
-
-            child: const Text(
-              "TAKEDAT",
-
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-
-                color: AppColors.primary,
-              ),
-            ),
-          ),
 
           const SizedBox(height: 10),
 

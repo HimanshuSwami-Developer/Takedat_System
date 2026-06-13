@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:takedat_app/core/app_colors.dart';
 
 import 'package:takedat_app/models/users_model.dart';
 import 'package:takedat_app/router/my_routes.dart';
@@ -201,7 +202,7 @@ Widget _employeeCard(UserModel employee) {
 
           backgroundColor: inactive
               ? Colors.grey.shade300
-              : const Color(0xFF00895F),
+              : AppColors.tertiary,
 
           child: Text(
             employee.fullName.isNotEmpty
@@ -284,7 +285,7 @@ Widget _employeeCard(UserModel employee) {
                       activeColor: Colors.white,
 
                       activeTrackColor:
-                          const Color(0xFF00895F),
+                          AppColors.primary,
 
                       inactiveThumbColor: Colors.white,
 

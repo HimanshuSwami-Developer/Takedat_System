@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -21,18 +21,44 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  int selectedTab = 0; // 0 = Login, 1 = OTP
+  int selectedTab = 0;
   bool showOtpVerify = false;
 
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _emailController    = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _otpEmailController = TextEditingController(); // for OTP tab email
-  final TextEditingController _otpController = TextEditingController();
+  final TextEditingController _otpEmailController = TextEditingController();
+  final TextEditingController _otpController      = TextEditingController();
 
-  String? _verificationId; // stores email after OTP sent
+  String? _verificationId;
+
+  // ── Resend timer ─────────────────────────────────────────────────────────
+  Timer?  _resendTimer;
+  int     _secondsLeft  = 30;
+  bool    _canResend    = false;
+
+  void _startResendTimer() {
+    _resendTimer?.cancel();
+    setState(() {
+      _secondsLeft = 30;
+      _canResend   = false;
+    });
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) { t.cancel(); return; }
+      setState(() {
+        if (_secondsLeft > 1) {
+          _secondsLeft--;
+        } else {
+          _secondsLeft = 0;
+          _canResend   = true;
+          t.cancel();
+        }
+      });
+    });
+  }
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     _otpEmailController.dispose();
@@ -42,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final size  = MediaQuery.of(context).size;
     final isWeb = size.width > 800;
 
     return BlocListener<AuthBloc, AuthState>(
@@ -53,9 +79,10 @@ class _LoginScreenState extends State<LoginScreen> {
         } else if (state is AuthFailure) {
           AppToast.error(context, state.message);
         } else if (state is OtpSentState) {
-          _verificationId = state.verificationId; // this is the email
+          _verificationId = state.verificationId;
           AppToast.success(context, "OTP sent to your email!");
           setState(() => showOtpVerify = true);
+          _startResendTimer(); // ← start timer whenever OTP is sent/resent
         }
       },
       child: Scaffold(
@@ -71,7 +98,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     const SizedBox(height: 30),
 
-                    /// ICON
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -105,7 +131,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 20),
 
-                    /// TAB SWITCH
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
@@ -122,7 +147,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 12),
 
-                    /// FORM CARD
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -150,7 +174,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 12),
 
-                    /// DIVIDER
                     Row(
                       children: [
                         const Expanded(child: Divider()),
@@ -169,9 +192,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Expanded(
                           child: InkWell(
-                            onTap: () => context.push(MyRoutes.registerScreen),
+                            onTap: () =>
+                                context.push(MyRoutes.registerScreen),
                             child: _socialButton(
-                                "Register New Employees", Icons.fingerprint),
+                              "Register New Employees",
+                              Icons.fingerprint,
+                            ),
                           ),
                         ),
                       ],
@@ -182,8 +208,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text.rich(
                       TextSpan(
                         text: "By continuing, you agree to our ",
-                        style:
-                            AppTextStyles.small.copyWith(color: Colors.black54),
+                        style: AppTextStyles.small
+                            .copyWith(color: Colors.black54),
                         children: [
                           TextSpan(
                             text: "Terms of Service",
@@ -222,14 +248,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ============================
-  // TAB BUILDER
-  // ============================
+  // ── TAB BUILDER ──────────────────────────────────────────────────────────────
   Widget _buildTab(String label, int index) {
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() {
-          selectedTab = index;
+          selectedTab  = index;
           showOtpVerify = false;
           _otpController.clear();
         }),
@@ -254,9 +278,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ============================
-  // EMAIL + PASSWORD LOGIN FORM
-  // ============================
+  // ── EMAIL + PASSWORD LOGIN FORM ──────────────────────────────────────────────
   Widget _emailLoginForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,7 +308,7 @@ class _LoginScreenState extends State<LoginScreen> {
               onTap: isLoading
                   ? null
                   : () {
-                      final email = _emailController.text.trim();
+                      final email    = _emailController.text.trim();
                       final password = _passwordController.text.trim();
                       if (email.isEmpty || password.isEmpty) {
                         AppToast.warning(
@@ -295,7 +317,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       }
                       context.read<AuthBloc>().add(
                             AdminLoginEvent(
-                                email: email, password: password),
+                              email: email,
+                              password: password,
+                            ),
                           );
                     },
             );
@@ -305,18 +329,16 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ============================
-  // EMAIL OTP REQUEST FORM
-  // ============================
+  // ── EMAIL OTP REQUEST FORM ───────────────────────────────────────────────────
   Widget _otpRequestForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CustomTextField(
-          label: "Email Address",          // ← was Phone Number
-          hint: "name@example.com",        // ← was +91 98765 43210
-          icon: Icons.email_outlined,      // ← was Icons.phone_outlined
-          controller: _otpEmailController, // ← separate controller for OTP tab
+          label: "Email Address",
+          hint: "name@example.com",
+          icon: Icons.email_outlined,
+          controller: _otpEmailController,
           keyboardType: TextInputType.emailAddress,
         ),
         const SizedBox(height: 20),
@@ -334,9 +356,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             context, "Please enter your email.");
                         return;
                       }
-                      context
-                          .read<AuthBloc>()
-                          .add(SendOtpEvent(email)); // ← was phone
+                      context.read<AuthBloc>().add(SendOtpEvent(email));
                     },
             );
           },
@@ -345,10 +365,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ============================
-  // EMAIL OTP VERIFY FORM
-  // ============================
+  // ── EMAIL OTP VERIFY FORM ────────────────────────────────────────────────────
   Widget _otpVerifyForm() {
+    // Format seconds as "0:30", "0:09" etc.
+    final String countdown =
+        "0:${_secondsLeft.toString().padLeft(2, '0')}";
+
     return Column(
       children: [
         /// HEADER
@@ -360,12 +382,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 color: AppColors.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.mark_email_read,  // ← was Icons.verified_user
-                  color: AppColors.primary, size: 20),
+              child: Icon(
+                Icons.mark_email_read,
+                color: AppColors.primary,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 16),
             Text(
-              "Email Verification",             // ← was "Verification"
+              "Email Verification",
               style: AppTextStyles.headline
                   .copyWith(color: Colors.black, fontSize: 16),
             ),
@@ -387,8 +412,7 @@ class _LoginScreenState extends State<LoginScreen> {
               _otpEmailController.text.isNotEmpty
                   ? _otpEmailController.text
                   : "your email",
-              style:
-                  AppTextStyles.label.copyWith(color: AppColors.primary),
+              style: AppTextStyles.label.copyWith(color: AppColors.primary),
             ),
           ],
         ),
@@ -403,7 +427,9 @@ class _LoginScreenState extends State<LoginScreen> {
             width: 50,
             height: 55,
             textStyle: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.w600),
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
             decoration: BoxDecoration(
               color: Colors.grey.shade100,
               borderRadius: BorderRadius.circular(10),
@@ -414,7 +440,9 @@ class _LoginScreenState extends State<LoginScreen> {
             width: 50,
             height: 55,
             textStyle: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.w600),
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
@@ -449,7 +477,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             VerifyOtpEvent(
                               verificationId: _verificationId!,
                               otp: otp,
-                              email: _otpEmailController.text.trim(), // ← was phone
+                              email: _otpEmailController.text.trim(),
                             ),
                           );
                     },
@@ -457,41 +485,73 @@ class _LoginScreenState extends State<LoginScreen> {
           },
         ),
 
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
 
-        /// RESEND
-        GestureDetector(
-          onTap: () {
-            final email = _otpEmailController.text.trim();
-            if (email.isEmpty) return;
-            _otpController.clear();
-            setState(() => showOtpVerify = false);
-            context.read<AuthBloc>().add(SendOtpEvent(email));
-          },
-          child: Text(
-            "Didn't receive the code? Resend OTP",
-            style: AppTextStyles.small.copyWith(color: AppColors.primary),
+        /// RESEND ROW — disabled with countdown OR enabled as tappable text
+        if (_canResend)
+          GestureDetector(
+            onTap: () {
+              final email = _otpEmailController.text.trim();
+              if (email.isEmpty) return;
+              _otpController.clear();
+              setState(() => showOtpVerify = false);
+              context.read<AuthBloc>().add(SendOtpEvent(email));
+              // timer restarts via OtpSentState listener above
+            },
+            child: Text(
+              "Didn't receive the code? Resend OTP",
+              style: AppTextStyles.small.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          )
+        else
+          // Greyed-out resend + live countdown
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Resend OTP in ",
+                style: AppTextStyles.small.copyWith(color: Colors.grey),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.access_time,
+                      size: 13,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      countdown,
+                      style: AppTextStyles.small.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ),
 
         const SizedBox(height: 6),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.access_time, size: 14, color: Colors.grey),
-            const SizedBox(width: 4),
-            Text("Resend in 00:54",
-                style: AppTextStyles.small.copyWith(color: Colors.grey)),
-          ],
-        ),
       ],
     );
   }
 
-  // ============================
-  // SOCIAL BUTTON
-  // ============================
+  // ── SOCIAL BUTTON ─────────────────────────────────────────────────────────────
   Widget _socialButton(String text, IconData icon) {
     return Container(
       height: 48,
@@ -505,8 +565,10 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             Icon(icon),
             const SizedBox(width: 8),
-            Text(text,
-                style: AppTextStyles.label.copyWith(color: Colors.black)),
+            Text(
+              text,
+              style: AppTextStyles.label.copyWith(color: Colors.black),
+            ),
           ],
         ),
       ),

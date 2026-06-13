@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:takedat_app/core/app_colors.dart';
 import 'package:takedat_app/screens/auth/widget/custom_textfield.dart';
 import 'package:takedat_app/screens/employees/bloc/employee_compliance_bloc.dart';
 import 'package:takedat_app/screens/employees/bloc/employee_compliance_event.dart';
@@ -127,7 +128,7 @@ class _EmployeeComplianceScreenState extends State<EmployeeComplianceScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF00C57B),
+        backgroundColor: AppColors.primary,
 
         elevation: 4,
 

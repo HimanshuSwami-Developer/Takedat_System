@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Takedat',
+      title: '4 You Solution',
       routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
     );

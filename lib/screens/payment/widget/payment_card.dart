@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:takedat_app/constant/session_keys.dart';
+import 'package:takedat_app/constant/session_manager.dart';
 
 import 'package:takedat_app/core/app_colors.dart';
 import 'package:takedat_app/core/app_text.dart';
@@ -93,7 +95,7 @@ class PaymentCard extends StatelessWidget {
             height: 5,
 
             decoration: BoxDecoration(
-              color: _hasPayment ? _statusColor : Colors.grey.shade300,
+              color: _hasPayment ? AppColors.primary : Colors.grey.shade300,
 
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(22),
@@ -296,41 +298,42 @@ class PaymentCard extends StatelessWidget {
                 Row(
                   children: [
                     /// UPDATE
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: onUpdate,
+                    if (SessionManager.getString(SessionKeys.role) == "admin")
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: onUpdate,
 
-                        icon: Icon(
-                          Icons.edit_outlined,
+                          icon: Icon(
+                            Icons.edit_outlined,
 
-                          size: 18,
+                            size: 18,
 
-                          color: AppColors.primary,
-                        ),
-
-                        label: Text(
-                          "Update",
-
-                          style: AppTextStyles.label.copyWith(
                             color: AppColors.primary,
                           ),
-                        ),
 
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 50),
+                          label: Text(
+                            "Update",
 
-                          side: BorderSide(
-                            color: AppColors.primary.withOpacity(0.4),
+                            style: AppTextStyles.label.copyWith(
+                              color: AppColors.primary,
+                            ),
                           ),
 
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 50),
+
+                            side: BorderSide(
+                              color: AppColors.primary.withOpacity(0.4),
+                            ),
+
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(width: 10),
+                    Spacer(),
 
                     /// GENERATE SLIP
                     Expanded(

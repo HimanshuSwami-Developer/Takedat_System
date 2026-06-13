@@ -25,7 +25,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final primaryGreen = const Color(0xff006B43);
+  final primaryGreen = AppColors.primary;
 
   double downloadProgress = 0;
   String downloadMessage = "";
@@ -381,7 +381,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   if (_isSuccess)
                                     const Icon(
                                       Icons.check_circle_rounded,
-                                      color: Colors.greenAccent,
+                                      color: Colors.redAccent,
                                       size: 20,
                                     ),
                                   if (_isFailed)

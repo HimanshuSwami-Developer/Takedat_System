@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:takedat_app/core/app_colors.dart';
 import 'package:takedat_app/core/app_text.dart';
 import 'package:takedat_app/models/shift_model.dart';
 import 'package:takedat_app/screens/attendance/widgets/manage_attendance.dart';
@@ -213,11 +214,11 @@ class _AttendanceCardState extends State<AttendanceCard> {
               children: [
                 CircleAvatar(
                   backgroundColor:
-                      isPresent ? Colors.green.shade100 : Colors.red.shade100,
+                    Colors.red.shade100,
                   child: Text(
                     item["initials"] ?? "--",
                     style: TextStyle(
-                      color: isPresent ? Colors.green : Colors.red,
+                      color:  AppColors.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
