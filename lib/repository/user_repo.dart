@@ -359,7 +359,7 @@ Future<UserModel> registerUser(UserModel user) async {
   /// ======================================================
   /// GET USERS
   /// ======================================================
- Future<List<UserModel>> getUsers({
+Future<List<UserModel>> getUsers({
   int page = 0,
   int limit = 20,
   String search = '',
@@ -367,14 +367,14 @@ Future<UserModel> registerUser(UserModel user) async {
   final from = page * limit;
   final to   = from + limit - 1;
 
-  // ✅ "user" → "employee"
-  PostgrestFilterBuilder query = supabase
+  // ✅ Dynamic query — type issue fix
+  dynamic query = supabase
     .from('users')
     .select()
-    .eq("role", "employee"); // ← "user" tha, "employee" karo
+    .eq('role', 'employee');
 
   if (search.isNotEmpty) {
-    query = query.or(
+    query = (query as dynamic).or(
       'full_name.ilike.%$search%,'
       'email.ilike.%$search%,'
       'phone.ilike.%$search%,'
@@ -382,11 +382,13 @@ Future<UserModel> registerUser(UserModel user) async {
     );
   }
 
-  final response = await query
+  final response = await (query as dynamic)
     .order('created_at', ascending: false)
     .range(from, to);
 
-  return (response as List).map((e) => UserModel.fromMap(e)).toList();
+  return (response as List)
+    .map((e) => UserModel.fromMap(e as Map<String, dynamic>))
+    .toList();
 }
 
   /// ======================================================

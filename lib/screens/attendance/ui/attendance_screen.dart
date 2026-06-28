@@ -21,6 +21,7 @@ import 'package:takedat_app/screens/attendance/widgets/custom_date_picker.dart';
 import 'package:takedat_app/screens/attendance/widgets/custom_dropdown.dart';
 import 'package:takedat_app/screens/attendance/widgets/manage_attendance.dart';
 import 'package:takedat_app/screens/attendance/widgets/manage_shift.dart';
+import 'package:takedat_app/screens/attendance/widgets/weekly_rota_download_btn.dart';
 
 import 'package:takedat_app/screens/auth/widget/custom_button.dart';
 import 'package:takedat_app/screens/auth/widget/custom_outlined_button.dart';
@@ -83,7 +84,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F5),
      floatingActionButton: role != "admin"
-          ? SizedBox(
+          ? 
+          SizedBox(
             width: 100,
             child: CustomButton( 
                               text: "Export",
@@ -96,7 +98,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                 await attendanceRepository.exportAttendanceCsv();
                               },
                             ),
-          ): null,
+          )
+          : const WeeklyRotaDownloadButton(),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
 
