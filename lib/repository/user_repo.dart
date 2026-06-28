@@ -17,16 +17,56 @@ class UserRepository {
   /// ======================================================
   /// REGISTER USER
   /// ======================================================
+Future<UserModel> registerUser(UserModel user) async {
 
-  Future<UserModel> registerUser(UserModel user) async {
-    final response = await supabase
-        .from('users')
-        .insert({...user.toMap()})
-        .select()
-        .single();
+  // 1. Email check
+  final existing = await supabase
+    .from('users')
+    .select('id')
+    .eq('email', user.email)
+    .maybeSingle();
 
-    return UserModel.fromMap(response);
+  if (existing != null) {
+    throw Exception("Email already registered.");
   }
+
+  // 2. Auth signup — trigger automatically basic row banayega
+  final response = await supabase.auth.signUp(
+    email:    user.email,
+    password: user.email,
+  );
+
+  if (response.user == null) {
+    throw Exception("Registration failed.");
+  }
+
+  final authId = response.user!.id;
+
+  // 3. ✅ UPSERT — trigger ke row ko update karega
+  // Duplicate error kabhi nahi aayega
+  await supabase.from('users').upsert(
+    {
+      'id':        authId,   // ← Auth UUID
+      'emp_id':    user.empId,
+      'full_name': user.fullName,
+      'email':     user.email,
+      'phone':     user.phone,
+      'address':   user.address,
+      'role':      'employee',
+      'is_active': false,
+    },
+    onConflict: 'id', // ← id conflict pe update karo
+  );
+
+  // 4. Fresh fetch
+  final data = await supabase
+    .from('users')
+    .select()
+    .eq('id', authId)
+    .single();
+
+  return UserModel.fromMap(data);
+}
 
   Future<bool> hasUploadedDocuments(String userId) async {
     final response = await supabase
@@ -318,35 +358,35 @@ class UserRepository {
   /// ======================================================
   /// GET USERS
   /// ======================================================
-  Future<List<UserModel>> getUsers({
-    int page = 0,
-    int limit = 20,
-    String search = '',
-  }) async {
-    final from = page * limit;
+ Future<List<UserModel>> getUsers({
+  int page = 0,
+  int limit = 20,
+  String search = '',
+}) async {
+  final from = page * limit;
+  final to   = from + limit - 1;
 
-    final to = from + limit - 1;
+  // ✅ "user" → "employee"
+  PostgrestFilterBuilder query = supabase
+    .from('users')
+    .select()
+    .eq("role", "employee"); // ← "user" tha, "employee" karo
 
-    PostgrestFilterBuilder query = supabase
-        .from('users')
-        .select()
-        .eq("role", "user");
-
-    if (search.isNotEmpty) {
-      query = query.or(
-        'full_name.ilike.%$search%,'
-        'email.ilike.%$search%,'
-        'phone.ilike.%$search%,'
-        'emp_id.ilike.%$search%',
-      );
-    }
-
-    final response = await query
-        .order('created_at', ascending: false)
-        .range(from, to);
-
-    return (response as List).map((e) => UserModel.fromMap(e)).toList();
+  if (search.isNotEmpty) {
+    query = query.or(
+      'full_name.ilike.%$search%,'
+      'email.ilike.%$search%,'
+      'phone.ilike.%$search%,'
+      'emp_id.ilike.%$search%',
+    );
   }
+
+  final response = await query
+    .order('created_at', ascending: false)
+    .range(from, to);
+
+  return (response as List).map((e) => UserModel.fromMap(e)).toList();
+}
 
   /// ======================================================
   /// UPDATE STATUS
