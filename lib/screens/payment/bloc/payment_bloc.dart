@@ -111,38 +111,43 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
   // =====================================================
   // UPSERT
   // =====================================================
+Future<void> _onUpsert(
+  UpsertPayment event,
+  Emitter<PaymentState> emit,
+) async {
+  final current = state;
+  if (current is! PaymentLoaded) return;
 
-  Future<void> _onUpsert(
-    UpsertPayment event,
-    Emitter<PaymentState> emit,
-  ) async {
-    final current = state;
-    if (current is! PaymentLoaded) return;
+  try {
+    final savedModel = await _repository.upsertPayment(event.model);
 
-    try {
-      await _repository.upsertPayment(event.model);
+    final updatedList = current.payments.map((p) {
+      if (p.attendanceId == savedModel.attendanceId) {
+        // ✅ copyWith use karo taaki user + attendance preserved rahe
+        return p.copyWith(
+          paymentId:     savedModel.paymentId,
+          cashPayment:   savedModel.cashPayment,
+          niPayment:     savedModel.niPayment,
+          expense:       savedModel.expense,
+          paymentStatus: savedModel.paymentStatus,
+          updatedAt:     savedModel.updatedAt,
+        );
+      }
+      return p;
+    }).toList();
 
-      /// Optimistically update the list
-      final updatedList = current.payments.map((p) {
-        if (p.attendanceId == event.model.attendanceId) {
-          return event.model;
-        }
-        return p;
-      }).toList();
-
-      emit(current.copyWith(
-        payments: updatedList,
-        successMessage: 'Payment updated successfully',
-        clearMessages: false,
-      ));
-    } catch (e) {
-      emit(current.copyWith(
-        errorMessage: e.toString(),
-        clearMessages: false,
-      ));
-    }
+    emit(current.copyWith(
+      payments:       updatedList,
+      successMessage: 'Payment updated successfully',
+      clearMessages:  false,
+    ));
+  } catch (e) {
+    emit(current.copyWith(
+      errorMessage:  e.toString(),
+      clearMessages: false,
+    ));
   }
-
+}
   // =====================================================
   // DELETE
   // =====================================================

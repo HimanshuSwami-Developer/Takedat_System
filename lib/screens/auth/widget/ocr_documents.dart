@@ -393,41 +393,41 @@ class _OCRDocumentCardState extends State<OCRDocumentCard> {
       // ── 5. Parse date ─────────────────────────────────────
       final parsedExpiry = _parseDate(expiryDate);
 
-      // ── 6. Expired check ──────────────────────────────────
-      if (parsedExpiry != null) {
-        final today = DateTime(
-          DateTime.now().year,
-          DateTime.now().month,
-          DateTime.now().day,
-        );
-        final expiry = DateTime(
-          parsedExpiry.year,
-          parsedExpiry.month,
-          parsedExpiry.day,
-        );
+      // // ── 6. Expired check ──────────────────────────────────
+      // if (parsedExpiry != null) {
+      //   final today = DateTime(
+      //     DateTime.now().year,
+      //     DateTime.now().month,
+      //     DateTime.now().day,
+      //   );
+      //   final expiry = DateTime(
+      //     parsedExpiry.year,
+      //     parsedExpiry.month,
+      //     parsedExpiry.day,
+      //   );
 
-        if (expiry.isBefore(today) || expiry.isAtSameMomentAs(today)) {
-          setState(() {
-            uploaded = false;
-            isLoading = false;
-            selectedImage = null;
-            webImage = null;
-            documentNumber = '';
-            expiryDate = '';
-            holderName = '';
-            fileName = '';
-          });
+      //   if (expiry.isBefore(today) || expiry.isAtSameMomentAs(today)) {
+      //     setState(() {
+      //       uploaded = false;
+      //       isLoading = false;
+      //       selectedImage = null;
+      //       webImage = null;
+      //       documentNumber = '';
+      //       expiryDate = '';
+      //       holderName = '';
+      //       fileName = '';
+      //     });
 
-          AppUtils.showDialogMessage(
-            context,
-            title: "Document Expired",
-            message:
-                "${widget.title} has expired. Please upload a valid document.",
-            buttonText: "Upload Again",
-          );
-          return;
-        }
-      }
+      //     AppUtils.showDialogMessage(
+      //       context,
+      //       title: "Document Expired",
+      //       message:
+      //           "${widget.title} has expired. Please upload a valid document.",
+      //       buttonText: "Upload Again",
+      //     );
+      //     return;
+      //   }
+      // }
 
       // ── 7. Fire callback with COMPRESSED bytes / file ────
       if (kIsWeb && webImage != null) {

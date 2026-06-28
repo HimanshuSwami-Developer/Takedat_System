@@ -8,10 +8,6 @@ class PaymentTrackRepository {
 
   /// =====================================================
   /// GET PAYMENTS
-  ///
-  /// IF PAYMENT NOT EXISTS:
-  /// SHOW ATTENDANCE + USER DETAILS
-  /// WITH DEFAULT PAYMENT VALUES
   /// =====================================================
 
   Future<List<PaymentTrackModel>> getPayments({
@@ -20,8 +16,7 @@ class PaymentTrackRepository {
     String search = '',
   }) async {
     final from = page * limit;
-
-    final to = from + limit - 1;
+    final to   = from + limit - 1;
 
     dynamic query = supabase.from('attendance').select('''
         id,
@@ -33,7 +28,6 @@ class PaymentTrackRepository {
         shift_id,
         created_at,
         updated_at,
-
         users!inner(
           id,
           full_name,
@@ -44,7 +38,6 @@ class PaymentTrackRepository {
           address,
           is_active
         ),
-
         payment_track(
           payment_id,
           user_id,
@@ -58,26 +51,16 @@ class PaymentTrackRepository {
         )
       ''');
 
-    /// =========================================
-    /// SEARCH FROM DATABASE
-    /// =========================================
-
     if (search.trim().isNotEmpty) {
       final q = search.trim();
-
       query = query.or(
         'full_name.ilike.%$q%,'
         'email.ilike.%$q%,'
         'emp_id.ilike.%$q%,'
         'phone.ilike.%$q%',
-
         referencedTable: 'users',
       );
     }
-
-    /// =========================================
-    /// EXECUTE
-    /// =========================================
 
     final response = await query
         .order('created_at', ascending: false)
@@ -87,104 +70,58 @@ class PaymentTrackRepository {
 
     for (final item in response) {
       try {
-        final userMap = item['users'] as Map<String, dynamic>?;
-
+        final userMap     = item['users'] as Map<String, dynamic>?;
         final paymentList = item['payment_track'] as List?;
+        final shiftStart  = _parseDate(item['shift_start']);
+        final shiftEnd    = _parseDate(item['shift_end']);
 
-        final shiftStart = _parseDate(item['shift_start']);
+        if (shiftStart == null || shiftEnd == null) continue;
 
-        final shiftEnd = _parseDate(item['shift_end']);
-
-        if (shiftStart == null || shiftEnd == null) {
-          continue;
-        }
-
-        /// ATTENDANCE
         final attendance = AttendanceModel.fromJson({
-          'id': item['id'],
-
-          'user_id': item['user_id'] ?? '',
-
-          'mode': item['mode'] ?? '',
-
+          'id':         item['id'],
+          'user_id':    item['user_id'] ?? '',
+          'mode':       item['mode'] ?? '',
           'shift_start': shiftStart.toIso8601String(),
-
-          'shift_end': shiftEnd.toIso8601String(),
-
-          'status': item['status'] ?? '',
-
-          'shift_id': item['shift_id'],
-
+          'shift_end':  shiftEnd.toIso8601String(),
+          'status':     item['status'] ?? '',
+          'shift_id':   item['shift_id'],
           'created_at': item['created_at'],
-
           'updated_at': item['updated_at'],
-
-          'users': userMap,
+          'users':      userMap,
         });
 
-        /// USER
         final user = userMap != null ? _parseUser(userMap) : null;
 
-        /// PAYMENT EXISTS
         if (paymentList != null && paymentList.isNotEmpty) {
           final p = paymentList.first as Map<String, dynamic>;
-
-          payments.add(
-            PaymentTrackModel(
-              paymentId: p['payment_id'] as int?,
-
-              userId: (p['user_id'] ?? item['user_id'] ?? '') as String,
-
-              attendanceId: (p['attendance_id'] ?? attendance.id ?? 0) as int,
-
-              cashPayment: _toDouble(p['cash_payment']),
-
-              niPayment: _toDouble(p['ni_payment']),
-
-              expense: _toDouble(p['expense']),
-
-              paymentStatus: (p['payment_status'] ?? 'pending') as String,
-
-              createdAt: _parseDate(p['created_at']),
-
-              updatedAt: _parseDate(p['updated_at']),
-
-              user: user,
-
-              attendance: attendance,
-            ),
-          );
-        }
-        /// DEFAULT PAYMENT
-        else {
-          payments.add(
-            PaymentTrackModel(
-              paymentId: null,
-
-              userId: (item['user_id'] ?? '') as String,
-
-              attendanceId: attendance.id ?? 0,
-
-              cashPayment: 0,
-
-              niPayment: 0,
-
-              expense: 0,
-
-              paymentStatus: 'pending',
-
-              user: user,
-
-              attendance: attendance,
-            ),
-          );
+          payments.add(PaymentTrackModel(
+            paymentId:     p['payment_id'] as int?,
+            userId:        (p['user_id'] ?? item['user_id'] ?? '') as String,
+            attendanceId:  (p['attendance_id'] ?? attendance.id ?? 0) as int,
+            cashPayment:   _toDouble(p['cash_payment']),
+            niPayment:     _toDouble(p['ni_payment']),
+            expense:       _toDouble(p['expense']),
+            paymentStatus: (p['payment_status'] ?? 'pending') as String,
+            createdAt:     _parseDate(p['created_at']),
+            updatedAt:     _parseDate(p['updated_at']),
+            user:          user,
+            attendance:    attendance,
+          ));
+        } else {
+          payments.add(PaymentTrackModel(
+            paymentId:     null,
+            userId:        (item['user_id'] ?? '') as String,
+            attendanceId:  attendance.id ?? 0,
+            cashPayment:   0,
+            niPayment:     0,
+            expense:       0,
+            paymentStatus: 'pending',
+            user:          user,
+            attendance:    attendance,
+          ));
         }
       } catch (e) {
-        assert(() {
-          print('[PaymentRepo] $e');
-
-          return true;
-        }());
+        assert(() { print('[PaymentRepo] $e'); return true; }());
       }
     }
 
@@ -192,46 +129,61 @@ class PaymentTrackRepository {
   }
 
   /// =====================================================
-  /// CREATE PAYMENT
+  /// CREATE PAYMENT — returns saved model
   /// =====================================================
 
-  Future<void> createPayment(PaymentTrackModel model) async {
-    await supabase.from('payment_track').insert(model.toMap());
+  Future<PaymentTrackModel> createPayment(PaymentTrackModel model) async {
+    final response = await supabase
+      .from('payment_track')
+      .insert(model.toMap())
+      .select()
+      .single();
+
+    return _mergeWithOriginal(response, model);
   }
 
   /// =====================================================
-  /// UPDATE PAYMENT
+  /// UPDATE PAYMENT — returns saved model
   /// =====================================================
 
-  Future<void> updatePayment({
+  Future<PaymentTrackModel> updatePayment({
     required int paymentId,
     required PaymentTrackModel model,
   }) async {
-    await supabase
-        .from('payment_track')
-        .update(model.toMap())
-        .eq('payment_id', paymentId);
+    final response = await supabase
+      .from('payment_track')
+      .update(model.toMap())
+      .eq('payment_id', paymentId)
+      .select()
+      .single();
+
+    return _mergeWithOriginal(response, model);
   }
 
   /// =====================================================
-  /// UPSERT PAYMENT
+  /// UPSERT PAYMENT — returns updated PaymentTrackModel
+  /// ✅ FIXED: now returns model so bloc can update list
   /// =====================================================
 
-  Future<void> upsertPayment(PaymentTrackModel model) async {
+  Future<PaymentTrackModel> upsertPayment(PaymentTrackModel model) async {
     final existing = await supabase
-        .from('payment_track')
-        .select('payment_id')
-        .eq('attendance_id', model.attendanceId)
-        .maybeSingle();
+      .from('payment_track')
+      .select('payment_id')
+      .eq('attendance_id', model.attendanceId)
+      .maybeSingle();
+
+    PaymentTrackModel saved;
 
     if (existing != null) {
-      await updatePayment(
+      saved = await updatePayment(
         paymentId: existing['payment_id'] as int,
-        model: model,
+        model:     model,
       );
     } else {
-      await createPayment(model);
+      saved = await createPayment(model);
     }
+
+    return saved;
   }
 
   /// =====================================================
@@ -239,7 +191,10 @@ class PaymentTrackRepository {
   /// =====================================================
 
   Future<void> deletePayment(int paymentId) async {
-    await supabase.from('payment_track').delete().eq('payment_id', paymentId);
+    await supabase
+      .from('payment_track')
+      .delete()
+      .eq('payment_id', paymentId);
   }
 
   /// =====================================================
@@ -248,33 +203,51 @@ class PaymentTrackRepository {
 
   Future<PaymentTrackModel?> getPayment(int paymentId) async {
     final response = await supabase
-        .from('payment_track')
-        .select('''
-          *,
-          users:user_id (
-            id,
-            full_name,
-            email,
-            emp_id,
-            phone,
-            role,
-            address,
-            is_active
-          )
-        ''')
-        .eq('payment_id', paymentId)
-        .maybeSingle();
+      .from('payment_track')
+      .select('''
+        *,
+        users:user_id (
+          id, full_name, email,
+          emp_id, phone, role,
+          address, is_active
+        )
+      ''')
+      .eq('payment_id', paymentId)
+      .maybeSingle();
 
     if (response == null) return null;
-
     return PaymentTrackModel.fromMap(response);
   }
+
+  /// =====================================================
+  /// MERGE — DB response + original model (user + attendance)
+  /// DB response mein user/attendance nahi hota
+  /// isliye original se copy karo
+  /// =====================================================
+
+  PaymentTrackModel _mergeWithOriginal(
+  Map<String, dynamic> dbResponse,
+  PaymentTrackModel original,
+) {
+  return PaymentTrackModel(
+    paymentId:     dbResponse['payment_id'] as int?,
+    userId:        (dbResponse['user_id'] ?? original.userId) as String,
+    attendanceId:  (dbResponse['attendance_id'] ?? original.attendanceId) as int,
+    cashPayment:   _toDouble(dbResponse['cash_payment']),
+    niPayment:     _toDouble(dbResponse['ni_payment']),
+    expense:       _toDouble(dbResponse['expense']),
+    paymentStatus: (dbResponse['payment_status'] ?? 'pending') as String,
+    createdAt:     _parseDate(dbResponse['created_at']),
+    updatedAt:     _parseDate(dbResponse['updated_at']),
+    user:          original.user,
+    attendance:    original.attendance,
+  );
+}
 
   // =====================================================
   // HELPERS
   // =====================================================
 
-  /// Safe double parse
   double _toDouble(dynamic value) {
     if (value == null) return 0.0;
     if (value is double) return value;
@@ -283,25 +256,22 @@ class PaymentTrackRepository {
     return double.tryParse(value.toString()) ?? 0.0;
   }
 
-  /// Safe DateTime parse
   DateTime? _parseDate(dynamic value) {
     if (value == null) return null;
     if (value is DateTime) return value;
     return DateTime.tryParse(value.toString());
   }
 
-  /// Safe UserModel parse — fills missing fields with defaults
   UserModel _parseUser(Map<String, dynamic> map) {
     return UserModel(
-      id: map['id']?.toString(),
-      empId: (map['emp_id'] ?? '').toString(),
-      fullName: (map['full_name'] ?? '').toString(),
-      email: (map['email'] ?? '').toString(),
-      phone: (map['phone'] ?? '').toString(),
-      // 'address' is not in the payment select — default to empty
-      address: (map['address'] ?? '').toString(),
-      role: (map['role'] ?? '').toString(),
-      isActive: map['is_active'] == true || map['is_active'] == 1,
+      id:        map['id']?.toString(),
+      empId:     (map['emp_id']    ?? '').toString(),
+      fullName:  (map['full_name'] ?? '').toString(),
+      email:     (map['email']     ?? '').toString(),
+      phone:     (map['phone']     ?? '').toString(),
+      address:   (map['address']   ?? '').toString(),
+      role:      (map['role']      ?? '').toString(),
+      isActive:  map['is_active'] == true || map['is_active'] == 1,
       createdAt: _parseDate(map['created_at']),
     );
   }

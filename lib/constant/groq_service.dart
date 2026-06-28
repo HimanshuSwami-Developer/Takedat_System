@@ -4,10 +4,13 @@ import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
-const _functionUrl =
-    'https://ylrjuvqnajsmfwvsqzsm.supabase.co/functions/v1/groq-proxy';
-const _anonKey =
-    'sb_publishable_A_XrAsxrYA2cI1-zP_oY8A_jpJuOAQT';
+// const _functionUrl =
+//     'https://ylrjuvqnajsmfwvsqzsm.supabase.co/functions/v1/groq-proxy';
+// const _anonKey =
+//     'sb_publishable_A_XrAsxrYA2cI1-zP_oY8A_jpJuOAQT';
+
+  const _functionUrl='https://pbgmovxdwfzvgaskwqlt.supabase.co/functions/v1/groq-proxy';
+  const _anonKey='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZ21vdnhkd2Z6dmdhc2t3cWx0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjU3MzM3MiwiZXhwIjoyMDk4MTQ5MzcyfQ.C8msQTaX2ZZ5L062jlPnIQdW_ATYDz7x1NsrPhJdsoQ';
 
 /// Compresses image bytes to fit within [targetSizeKB] kilobytes.
 /// Tries JPEG quality steps from 85 → 10 until size fits.
