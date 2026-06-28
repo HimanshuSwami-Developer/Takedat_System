@@ -7,6 +7,7 @@ class UserModel {
   final String phone;
   final String address;
   final String role;
+  final String companyCode;
   final DateTime? createdAt;
   final bool isActive;
 
@@ -18,6 +19,7 @@ class UserModel {
     required this.phone,
     required this.address,
     required this.role,
+    required this.companyCode,
     required this.isActive,
     this.createdAt,
   });
@@ -32,6 +34,7 @@ class UserModel {
       phone: '',
       address: '',
       role: '',
+      companyCode: '',
       isActive: false,
       createdAt: null,
     );
@@ -46,6 +49,7 @@ class UserModel {
       "phone": phone,
       "address": address,
       "role": role,
+      "company_code": companyCode,
       "is_active": isActive,
     };
   }
@@ -69,6 +73,8 @@ class UserModel {
 
       role: map['role'] ?? '',
 
+      companyCode: map['company_code'] ?? '',
+
       isActive: map['is_active'] == true || map['is_active'] == 1,
 
       createdAt: map['created_at'] != null
@@ -88,7 +94,8 @@ class UserModel {
     String? phone,
     String? address,
     String? role,
-      bool? isActive,
+    String? companyCode,
+    bool? isActive,
     DateTime? createdAt,
   }) {
     return UserModel(
@@ -99,6 +106,7 @@ class UserModel {
       phone: phone ?? this.phone,
       address: address ?? this.address,
       role: role ?? this.role,
+      companyCode: companyCode ?? this.companyCode,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -115,6 +123,7 @@ UserModel(
   phone: $phone,
   address: $address,
   role: $role,
+  companyCode: $companyCode,
   isActive: $isActive,
   createdAt: $createdAt
 )

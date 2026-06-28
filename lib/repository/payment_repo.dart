@@ -271,6 +271,7 @@ class PaymentTrackRepository {
       phone:     (map['phone']     ?? '').toString(),
       address:   (map['address']   ?? '').toString(),
       role:      (map['role']      ?? '').toString(),
+      companyCode: (map['company_code'] ?? '').toString(),
       isActive:  map['is_active'] == true || map['is_active'] == 1,
       createdAt: _parseDate(map['created_at']),
     );

@@ -8,7 +8,7 @@ class SessionKeys {
   static const String phone = "phone";
   static const String address = "address";
   static const String role = "role";
-
+  static const String companyCode = 'companyCode';
   /// AUTH
   static const String isLoggedIn = "isLoggedIn";
 

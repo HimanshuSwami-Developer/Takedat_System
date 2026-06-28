@@ -12,6 +12,7 @@ class RegisterUserEvent extends RegisterEvent {
   final String email;
   final String phone;
   final String address;
+  final String companyCode;
 
   RegisterUserEvent({
     required this.empId,
@@ -19,6 +20,7 @@ class RegisterUserEvent extends RegisterEvent {
     required this.email,
     required this.phone,
     required this.address,
+    required this.companyCode,
   });
 }
 

@@ -36,6 +36,12 @@ class _PersonalDetailsStepState
   final phoneController = TextEditingController();
   final addressController = TextEditingController();
 
+  static const _companies = [
+    {'code': 'takedat', 'label': 'Takedat'},
+  ];
+
+  String _selectedCompanyCode = 'takedat';
+
   @override
   void dispose() {
     empIdController.dispose();
@@ -77,6 +83,11 @@ class _PersonalDetailsStepState
     await SessionManager.saveString(
       SessionKeys.address,
       addressController.text.trim(),
+    );
+
+    await SessionManager.saveString(
+      SessionKeys.companyCode,
+      _selectedCompanyCode,
     );
   }
 
@@ -193,6 +204,33 @@ class _PersonalDetailsStepState
                 isTextArea: true,
               ),
 
+              const SizedBox(height: 12),
+
+              /// COMPANY CODE DROPDOWN
+              DropdownButtonFormField<String>(
+                value: _selectedCompanyCode,
+                decoration: InputDecoration(
+                  labelText: "Company",
+                  prefixIcon: const Icon(Icons.business),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                items: _companies
+                    .map(
+                      (c) => DropdownMenuItem<String>(
+                        value: c['code'],
+                        child: Text(c['label']!),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _selectedCompanyCode = value);
+                  }
+                },
+              ),
+
               const SizedBox(height: 16),
 
               /// INFO BOX
@@ -262,6 +300,7 @@ class _PersonalDetailsStepState
                       email: emailController.text.trim(),
                       phone: phoneController.text.trim(),
                       address: addressController.text.trim(),
+                      companyCode: _selectedCompanyCode,
                     ),
                   );
                 },

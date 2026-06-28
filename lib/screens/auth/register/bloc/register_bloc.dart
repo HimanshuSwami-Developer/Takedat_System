@@ -32,8 +32,9 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
           email: event.email,
           phone: event.phone,
           address: event.address,
+          companyCode: event.companyCode,
           isActive: false,
-          role: 'user',
+          role: 'employee',
         );
 
         final registeredUser = await repository.registerUser(user);

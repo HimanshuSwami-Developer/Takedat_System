@@ -46,16 +46,17 @@ Future<UserModel> registerUser(UserModel user) async {
   // Duplicate error kabhi nahi aayega
   await supabase.from('users').upsert(
     {
-      'id':        authId,   // ← Auth UUID
-      'emp_id':    user.empId,
-      'full_name': user.fullName,
-      'email':     user.email,
-      'phone':     user.phone,
-      'address':   user.address,
-      'role':      'employee',
-      'is_active': false,
+      'id':           authId,
+      'emp_id':       user.empId,
+      'full_name':    user.fullName,
+      'email':        user.email,
+      'phone':        user.phone,
+      'address':      user.address,
+      'role':         'employee',
+      'company_code': user.companyCode,
+      'is_active':    false,
     },
-    onConflict: 'id', // ← id conflict pe update karo
+    onConflict: 'id',
   );
 
   // 4. Fresh fetch
