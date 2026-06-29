@@ -15,6 +15,45 @@ import 'package:takedat_app/core/app_colors.dart';
 import 'package:takedat_app/core/app_text.dart';
 import 'package:takedat_app/utils/app_utils.dart';
 
+// Top-level so compute() can send it to a background isolate.
+Future<Uint8List> _compressImageIsolate(Map<String, dynamic> params) async {
+  final Uint8List originalBytes = params['bytes'] as Uint8List;
+  final int targetSizeKB       = params['targetSizeKB'] as int;
+  final int targetBytes        = targetSizeKB * 1024;
+
+  final image = img.decodeImage(originalBytes);
+  if (image == null) return originalBytes;
+
+  // Step 1 — quality only
+  for (int quality = 85; quality >= 10; quality -= 10) {
+    final compressed = img.encodeJpg(image, quality: quality);
+    if (compressed.length <= targetBytes) return Uint8List.fromList(compressed);
+  }
+
+  // Step 2 — downscale + quality
+  double scale = 0.8;
+  while (scale >= 0.2) {
+    final resized = img.copyResize(
+      image,
+      width:         (image.width  * scale).round(),
+      height:        (image.height * scale).round(),
+      interpolation: img.Interpolation.linear,
+    );
+    for (int quality = 85; quality >= 10; quality -= 15) {
+      final compressed = img.encodeJpg(resized, quality: quality);
+      if (compressed.length <= targetBytes) return Uint8List.fromList(compressed);
+    }
+    scale -= 0.2;
+  }
+
+  // Fallback
+  final fallback = img.encodeJpg(
+    img.copyResize(image, width: (image.width * 0.2).round()),
+    quality: 10,
+  );
+  return Uint8List.fromList(fallback);
+}
+
 class DocumentUploadData {
   final File? file; // mobile
   final Uint8List? bytes; // web
@@ -60,65 +99,6 @@ class _OCRDocumentCardState extends State<OCRDocumentCard> {
   String expiryDate = '';
   String holderName = '';
   bool uploaded = false;
-
-  // ─────────────────────────────────────────────────────────
-  /// Compress to ≤ targetSizeKB.
-  /// Step 1 — quality loop at full resolution.
-  /// Step 2 — downscale + quality loop.
-  /// Fallback — smallest possible output.
-  // ─────────────────────────────────────────────────────────
-  Future<Uint8List> _compressToTargetSize(
-    Uint8List originalBytes, {
-    int targetSizeKB = 100,
-    int minQuality = 10,
-  }) async {
-    final targetBytes = targetSizeKB * 1024;
-
-    final image = img.decodeImage(originalBytes);
-    if (image == null) return originalBytes;
-
-    // Step 1 — quality only
-    for (int quality = 85; quality >= minQuality; quality -= 10) {
-      final compressed = img.encodeJpg(image, quality: quality);
-      if (compressed.length <= targetBytes) {
-        print(
-          'Compressed at quality=$quality → '
-          '${(compressed.length / 1024).toStringAsFixed(1)} KB',
-        );
-        return Uint8List.fromList(compressed);
-      }
-    }
-
-    // Step 2 — downscale + quality
-    double scale = 0.8;
-    while (scale >= 0.2) {
-      final resized = img.copyResize(
-        image,
-        width: (image.width * scale).round(),
-        height: (image.height * scale).round(),
-        interpolation: img.Interpolation.linear,
-      );
-      for (int quality = 85; quality >= minQuality; quality -= 15) {
-        final compressed = img.encodeJpg(resized, quality: quality);
-        if (compressed.length <= targetBytes) {
-          print(
-            'Compressed at scale=${scale.toStringAsFixed(1)} '
-            'quality=$quality → '
-            '${(compressed.length / 1024).toStringAsFixed(1)} KB',
-          );
-          return Uint8List.fromList(compressed);
-        }
-      }
-      scale -= 0.2;
-    }
-
-    // Fallback
-    final fallback = img.encodeJpg(
-      img.copyResize(image, width: (image.width * 0.2).round()),
-      quality: minQuality,
-    );
-    return Uint8List.fromList(fallback);
-  }
 
   // ─────────────────────────────────────────────────────────
   /// Date parser — handles dd.MM.yyyy / dd/MM/yyyy / ISO / dd MMM yyyy
@@ -345,14 +325,10 @@ class _OCRDocumentCardState extends State<OCRDocumentCard> {
       final originalBytes = await image.readAsBytes();
       print('Original: ${(originalBytes.length / 1024).toStringAsFixed(1)} KB');
 
-      // ── 2. Compress ONCE — reused for preview + upload ───
-      final compressedBytes = await _compressToTargetSize(
-        originalBytes,
-        targetSizeKB: 100,
-      );
-      print(
-        'Final compressed: '
-        '${(compressedBytes.length / 1024).toStringAsFixed(1)} KB',
+      // ── 2. Compress in background isolate — UI stays responsive ─
+      final compressedBytes = await compute(
+        _compressImageIsolate,
+        {'bytes': originalBytes, 'targetSizeKB': 100},
       );
 
       // ── 3. Store compressed bytes for preview & callback ─

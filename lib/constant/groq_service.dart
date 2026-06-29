@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
@@ -12,37 +13,31 @@ import 'package:image_picker/image_picker.dart';
   const _functionUrl='https://pbgmovxdwfzvgaskwqlt.supabase.co/functions/v1/groq-proxy';
   const _anonKey='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZ21vdnhkd2Z6dmdhc2t3cWx0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjU3MzM3MiwiZXhwIjoyMDk4MTQ5MzcyfQ.C8msQTaX2ZZ5L062jlPnIQdW_ATYDz7x1NsrPhJdsoQ';
 
-/// Compresses image bytes to fit within [targetSizeKB] kilobytes.
-/// Tries JPEG quality steps from 85 → 10 until size fits.
-/// If still too large, also downscales the image dimensions.
-Future<Uint8List> _compressToTargetSize(
-  Uint8List originalBytes, {
-  int targetSizeKB = 100,
-  int minQuality = 10,
-}) async {
-  final targetBytes = targetSizeKB * 1024;
+// Top-level function so compute() can run it in a background isolate.
+Future<Uint8List> _compressToTargetSize(Map<String, dynamic> params) async {
+  final Uint8List originalBytes = params['bytes']         as Uint8List;
+  final int targetSizeKB        = params['targetSizeKB']  as int;
+  final int minQuality          = (params['minQuality']   as int?) ?? 10;
+  final targetBytes             = targetSizeKB * 1024;
 
-  // Decode image
   final image = img.decodeImage(originalBytes);
   if (image == null) return originalBytes;
 
-  img.Image workingImage = image;
-
-  // Step 1: Try reducing quality at full resolution
+  // Step 1: quality only
   for (int quality = 85; quality >= minQuality; quality -= 10) {
-    final compressed = img.encodeJpg(workingImage, quality: quality);
+    final compressed = img.encodeJpg(image, quality: quality);
     if (compressed.length <= targetBytes) {
       return Uint8List.fromList(compressed);
     }
   }
 
-  // Step 2: If still too large, downscale dimensions + compress
+  // Step 2: downscale + quality
   double scale = 0.8;
   while (scale >= 0.2) {
     final resized = img.copyResize(
       image,
-      width: (image.width * scale).round(),
-      height: (image.height * scale).round(),
+      width:         (image.width  * scale).round(),
+      height:        (image.height * scale).round(),
       interpolation: img.Interpolation.linear,
     );
 
@@ -70,10 +65,10 @@ Future<Map<String, dynamic>> callGroqProxy({
 }) async {
   final originalBytes = await imageFile.readAsBytes();
 
-  // Compress to 60–100 KB range
-  final compressedBytes = await _compressToTargetSize(
-    originalBytes,
-    targetSizeKB: 100, // upper bound; usually lands in 60–100 KB
+  // Run compression in a background isolate — keeps the UI spinner animated
+  final compressedBytes = await compute(
+    _compressToTargetSize,
+    {'bytes': originalBytes, 'targetSizeKB': 100, 'minQuality': 10},
   );
 
   final base64Image = base64Encode(compressedBytes);
