@@ -14,8 +14,14 @@ import 'package:takedat_app/utils/app_utils.dart';
 
 class RegisterScreen extends StatefulWidget {
 
+  /// When provided, RegisterScreen runs in admin mode:
+  /// skips checkUserProgress, restores admin session on completion,
+  /// and calls this callback instead of navigating to login.
+  final VoidCallback? onComplete;
+
   const RegisterScreen({
     super.key,
+    this.onComplete,
   });
 
   @override
@@ -32,11 +38,47 @@ class _RegisterScreenState
 
   final repository = UserRepository();
 
+  // Saved admin session keys — restored after employee registration
+  String? _adminUserId;
+  String? _adminEmail;
+  String? _adminFullName;
+  String? _adminEmpId;
+  String? _adminPhone;
+  String? _adminAddress;
+  String? _adminCompanyCode;
+
+  bool get _isAdminMode => widget.onComplete != null;
+
   @override
   void initState() {
     super.initState();
 
-    checkUserProgress();
+    if (_isAdminMode) {
+      _saveAdminSession();
+    } else {
+      checkUserProgress();
+    }
+  }
+
+  void _saveAdminSession() {
+    _adminUserId      = SessionManager.getString(SessionKeys.userId);
+    _adminEmail       = SessionManager.getString(SessionKeys.email);
+    _adminFullName    = SessionManager.getString(SessionKeys.fullName);
+    _adminEmpId       = SessionManager.getString(SessionKeys.empId);
+    _adminPhone       = SessionManager.getString(SessionKeys.phone);
+    _adminAddress     = SessionManager.getString(SessionKeys.address);
+    _adminCompanyCode = SessionManager.getString(SessionKeys.companyCode);
+    setState(() => isLoading = false);
+  }
+
+  Future<void> _restoreAdminSession() async {
+    await SessionManager.saveString(SessionKeys.userId,      _adminUserId      ?? '');
+    await SessionManager.saveString(SessionKeys.email,       _adminEmail       ?? '');
+    await SessionManager.saveString(SessionKeys.fullName,    _adminFullName    ?? '');
+    await SessionManager.saveString(SessionKeys.empId,       _adminEmpId       ?? '');
+    await SessionManager.saveString(SessionKeys.phone,       _adminPhone       ?? '');
+    await SessionManager.saveString(SessionKeys.address,     _adminAddress     ?? '');
+    await SessionManager.saveString(SessionKeys.companyCode, _adminCompanyCode ?? '');
   }
 
   /// =====================================================
@@ -231,12 +273,16 @@ Future<void> checkUserProgress() async {
                                       /// STEP 3
                                       SignDocumentsStep(
 
-                                          onComplete: () {
+                                          onComplete: () async {
 
-                                            context.go(
-                                              MyRoutes
-                                                  .loginScreen,
-                                            );
+                                            if (_isAdminMode) {
+                                              await _restoreAdminSession();
+                                              widget.onComplete!();
+                                            } else {
+                                              context.go(
+                                                MyRoutes.loginScreen,
+                                              );
+                                            }
                                           },
                                         ),
                         ),

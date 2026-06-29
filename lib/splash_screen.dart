@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:takedat_app/constant/session_manager.dart';
 import 'package:takedat_app/router/my_routes.dart';
 
@@ -48,12 +49,23 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    Timer(const Duration(seconds: 3), () {
+    Timer(const Duration(seconds: 3), () async {
       if (!mounted) return;
-      if (SessionManager.isLoggedIn()) {
-        context.go(MyRoutes.attendanceScreen);
-      } else {
+
+      if (!SessionManager.isLoggedIn()) {
         context.go(MyRoutes.loginScreen);
+        return;
+      }
+
+      /// Verify the Supabase session is still valid on the server.
+      /// If it's expired or not found (e.g. session_not_found), force logout.
+      try {
+        await Supabase.instance.client.auth.refreshSession();
+        if (mounted) context.go(MyRoutes.attendanceScreen);
+      } catch (_) {
+        await Supabase.instance.client.auth.signOut();
+        await SessionManager.clear();
+        if (mounted) context.go(MyRoutes.loginScreen);
       }
     });
   }

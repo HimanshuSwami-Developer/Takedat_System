@@ -158,11 +158,15 @@ class MainLayout extends StatelessWidget {
                 );
 
                 if (confirm == true) {
-                  /// LOGOUT
+                  /// SIGN OUT
                   await Supabase.instance.client.auth.signOut();
 
                   /// CLEAR LOCAL SESSION
                   await SessionManager.clear();
+
+                  /// CLEAR IMAGE CACHE
+                  PaintingBinding.instance.imageCache.clear();
+                  PaintingBinding.instance.imageCache.clearLiveImages();
 
                   context.go(MyRoutes.loginScreen);
                 }

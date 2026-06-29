@@ -23,6 +23,9 @@ import 'package:takedat_app/screens/attendance/widgets/manage_attendance.dart';
 import 'package:takedat_app/screens/attendance/widgets/manage_shift.dart';
 import 'package:takedat_app/screens/attendance/widgets/weekly_rota_download_btn.dart';
 
+import 'package:takedat_app/repository/user_repo.dart';
+import 'package:takedat_app/screens/auth/register/bloc/register_bloc.dart';
+import 'package:takedat_app/screens/auth/register/ui/register.dart';
 import 'package:takedat_app/screens/auth/widget/custom_button.dart';
 import 'package:takedat_app/screens/auth/widget/custom_outlined_button.dart';
 import 'package:takedat_app/screens/auth/widget/custom_textfield.dart';
@@ -83,23 +86,51 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F5),
-     floatingActionButton: role != "admin"
-          ? 
-          SizedBox(
-            width: 100,
-            child: CustomButton( 
-                              text: "Export",
-                      
-                              icon: Icons.download,
-                      
-                              isFullWidth: false,
-                      
-                              onTap: () async {
-                                await attendanceRepository.exportAttendanceCsv();
-                              },
+      floatingActionButton: role != "admin"
+          ? SizedBox(
+              width: 120,
+              child: CustomButton(
+                text: "Export",
+                icon: Icons.download,
+                isFullWidth: false,
+                onTap: () async {
+                  await attendanceRepository.exportAttendanceCsv();
+                },
+              ),
+            )
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                /// ADD EMPLOYEE
+                SizedBox(
+                  height: 50,
+                  width: 180,
+                  child: CustomButton(
+                    text: "Add Employee",
+                    icon: Icons.person_add,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider(
+                            create: (_) => RegisterBloc(UserRepository()),
+                            child: RegisterScreen(
+                              onComplete: () => Navigator.pop(context),
                             ),
-          )
-          : const WeeklyRotaDownloadButton(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                /// WEEKLY ROTA
+                const WeeklyRotaDownloadButton(),
+              ],
+            ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
 
@@ -256,17 +287,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         Expanded(
                           child: CustomButton(
                             text: "Add Shift",
-                    
+
                             icon: Icons.schedule,
-                    
+
                             onTap: () {
                               showModalBottomSheet(
                                 context: context,
-                    
+
                                 isScrollControlled: true,
-                    
+
                                 backgroundColor: Colors.transparent,
-                    
+
                                 builder: (_) {
                                   return BlocProvider.value(
                                     value: context.read<AttendanceBloc>(),
@@ -279,7 +310,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         ),
                       ],
                     ),
-                  ],
+
+                    const SizedBox(height: 8),
+                   ],
                 ),
 
                 const SizedBox(height: 12),

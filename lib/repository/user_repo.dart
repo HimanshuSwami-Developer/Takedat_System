@@ -30,17 +30,20 @@ Future<UserModel> registerUser(UserModel user) async {
     throw Exception("Email already registered.");
   }
 
-  // 2. Auth signup — trigger automatically basic row banayega
-  final response = await supabase.auth.signUp(
-    email:    user.email,
-    password: user.email,
+  // 2. Admin API — creates auth user WITHOUT replacing current session
+  final adminResponse = await supabase.auth.admin.createUser(
+    AdminUserAttributes(
+      email:        user.email,
+      password:     user.email,
+      emailConfirm: true,
+    ),
   );
 
-  if (response.user == null) {
+  if (adminResponse.user == null) {
     throw Exception("Registration failed.");
   }
 
-  final authId = response.user!.id;
+  final authId = adminResponse.user!.id;
 
   // 3. ✅ UPSERT — trigger ke row ko update karega
   // Duplicate error kabhi nahi aayega
@@ -363,18 +366,23 @@ Future<List<UserModel>> getUsers({
   int page = 0,
   int limit = 20,
   String search = '',
+  bool? isActive, // ← null = sab, true = active only, false = inactive only
 }) async {
   final from = page * limit;
   final to   = from + limit - 1;
 
-  // ✅ Dynamic query — type issue fix
   dynamic query = supabase
     .from('users')
     .select()
     .eq('role', 'employee');
 
+  // ✅ Sirf tab filter karo jab explicitly pass kiya ho
+  if (isActive != null) {
+    query = query.eq('is_active', isActive);
+  }
+
   if (search.isNotEmpty) {
-    query = (query as dynamic).or(
+    query = query.or(
       'full_name.ilike.%$search%,'
       'email.ilike.%$search%,'
       'phone.ilike.%$search%,'
@@ -382,7 +390,7 @@ Future<List<UserModel>> getUsers({
     );
   }
 
-  final response = await (query as dynamic)
+  final response = await query
     .order('created_at', ascending: false)
     .range(from, to);
 
@@ -396,17 +404,18 @@ Future<List<UserModel>> getUsers({
   /// ======================================================
 
   Future<UserModel> updateUserStatus({
-    required String userId,
-    required bool isActive,
-  }) async {
-    final response = await supabase
-        .from('users')
-        .update({'is_active': isActive})
-        .eq('id', userId)
-        .select()
-        .single();
+  required String userId,
+  required bool isActive,
+}) async {
+  // ✅ Service role — RLS bypass
+  final response = await supabase
+    .from('users')
+    .update({'is_active': isActive})
+    .eq('id', userId)
+    .select()
+    .single();
 
-    return UserModel.fromMap(response);
-  }
+  return UserModel.fromMap(response);
+}
 
 }

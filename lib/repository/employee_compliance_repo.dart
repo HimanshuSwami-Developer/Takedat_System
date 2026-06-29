@@ -96,7 +96,7 @@ class EmployeeComplianceRepository {
           true,
         ).eq(
           'role',
-          'user',
+          'employee',
         );
 
     /// =====================================================

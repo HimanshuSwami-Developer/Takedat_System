@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../constant/session_keys.dart';
 import '../constant/session_manager.dart';
@@ -136,5 +137,7 @@ class AuthRepository {
   Future<void> logout() async {
     await supabase.auth.signOut();
     await SessionManager.clear();
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
   }
 }
