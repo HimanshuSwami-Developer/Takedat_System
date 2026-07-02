@@ -17,30 +17,25 @@ import '../bloc/register_state.dart';
 class PersonalDetailsStep extends StatefulWidget {
   final VoidCallback onNext;
 
-  const PersonalDetailsStep({
-    super.key,
-    required this.onNext,
-  });
+  const PersonalDetailsStep({super.key, required this.onNext});
 
   @override
-  State<PersonalDetailsStep> createState() =>
-      _PersonalDetailsStepState();
+  State<PersonalDetailsStep> createState() => _PersonalDetailsStepState();
 }
 
-class _PersonalDetailsStepState
-    extends State<PersonalDetailsStep> {
-
+class _PersonalDetailsStepState extends State<PersonalDetailsStep> {
   final empIdController = TextEditingController();
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
   final addressController = TextEditingController();
-
-  static const _companies = [
-    {'code': 'takedat', 'label': 'Takedat'},
+  static const List<Map<String, String>> _companies = [
+    {'code': 'valeron_protection_group', 'label': 'Valeron Protection Group'},
+    {'code': 'tybar_security', 'label': 'Tybar Security'},
+    {'code': 'gough_and_kelly', 'label': 'Gough & Kelly'},
   ];
 
-  String _selectedCompanyCode = 'takedat';
+  String _selectedCompanyCode = 'valeron_protection_group';
 
   @override
   void dispose() {
@@ -54,11 +49,7 @@ class _PersonalDetailsStepState
 
   /// SAVE SESSION
   Future<void> saveUserSession() async {
-
-    await SessionManager.saveBool(
-      SessionKeys.isLoggedIn,
-      true,
-    );
+    await SessionManager.saveBool(SessionKeys.isLoggedIn, true);
 
     await SessionManager.saveString(
       SessionKeys.empId,
@@ -93,52 +84,37 @@ class _PersonalDetailsStepState
 
   @override
   Widget build(BuildContext context) {
-
     return Padding(
       padding: const EdgeInsets.all(16),
 
       child: BlocConsumer<RegisterBloc, RegisterState>(
-
         listener: (context, state) async {
-
           /// SUCCESS
           if (state is RegisterSuccess) {
-
             /// SAVE SESSION
             await saveUserSession();
 
             /// TOAST
-            AppToast.success(
-              context,
-              "User Registered Successfully",
-            );
+            AppToast.success(context, "User Registered Successfully");
 
             widget.onNext();
           }
 
           /// ERROR
           if (state is RegisterFailure) {
-
-            AppToast.error(
-              context,
-              state.error,
-            );
+            AppToast.error(context, state.error);
           }
         },
 
         builder: (context, state) {
-
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
 
             children: [
-
               /// STEP TITLE
               Text(
                 "STEP 1 OF 3",
-                style: AppTextStyles.small.copyWith(
-                  color: AppColors.primary,
-                ),
+                style: AppTextStyles.small.copyWith(color: AppColors.primary),
               ),
 
               const SizedBox(height: 6),
@@ -157,9 +133,7 @@ class _PersonalDetailsStepState
               /// SUBTITLE
               Text(
                 "Please provide your legal information as it appears on your official documents.",
-                style: AppTextStyles.small.copyWith(
-                  color: Colors.black54,
-                ),
+                style: AppTextStyles.small.copyWith(color: Colors.black54),
               ),
 
               const SizedBox(height: 20),
@@ -244,11 +218,7 @@ class _PersonalDetailsStepState
 
                 child: Row(
                   children: [
-
-                    const Icon(
-                      Icons.verified,
-                      color: AppColors.primary,
-                    ),
+                    const Icon(Icons.verified, color: AppColors.primary),
 
                     const SizedBox(width: 8),
 
@@ -268,32 +238,24 @@ class _PersonalDetailsStepState
 
               /// BUTTON
               CustomButton(
-                text: state is RegisterLoading
-                    ? "Loading..."
-                    : "Continue",
+                text: state is RegisterLoading ? "Loading..." : "Continue",
 
                 icon: Icons.arrow_forward,
 
                 onTap: () {
-
                   /// VALIDATION
                   if (empIdController.text.trim().isEmpty ||
                       nameController.text.trim().isEmpty ||
                       emailController.text.trim().isEmpty ||
                       phoneController.text.trim().isEmpty ||
                       addressController.text.trim().isEmpty) {
-
-                    AppToast.warning(
-                      context,
-                      "Please fill all fields",
-                    );
+                    AppToast.warning(context, "Please fill all fields");
 
                     return;
                   }
 
                   /// REGISTER EVENT
                   context.read<RegisterBloc>().add(
-
                     RegisterUserEvent(
                       empId: empIdController.text.trim(),
                       fullName: nameController.text.trim(),
