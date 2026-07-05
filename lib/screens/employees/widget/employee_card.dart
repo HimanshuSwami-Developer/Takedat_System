@@ -10,10 +10,13 @@ class EmployeeComplianceCard extends StatelessWidget {
 
   final VoidCallback onTap;
 
+  final VoidCallback? onEdit;
+
   const EmployeeComplianceCard({
     super.key,
     required this.employee,
     required this.onTap,
+    this.onEdit,
   });
 
   @override
@@ -247,6 +250,40 @@ class EmployeeComplianceCard extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 18),
+
+                  /// EDIT BUTTON
+                  if (onEdit != null) ...[
+                    const SizedBox(height: 14),
+
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          backgroundColor: AppColors.primary.withValues(alpha: 0.08),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: onEdit,
+                        icon: const Icon(Icons.edit_outlined, size: 14),
+                        label: const Text(
+                          "Edit",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 4),
+                  ],
 
                   /// DOCUMENTS
                   Wrap(

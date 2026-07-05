@@ -3,11 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:takedat_app/core/app_colors.dart';
+import 'package:takedat_app/repository/profile_repo.dart';
+import 'package:takedat_app/repository/user_repo.dart';
 import 'package:takedat_app/screens/auth/widget/custom_textfield.dart';
 import 'package:takedat_app/screens/employees/bloc/employee_compliance_bloc.dart';
 import 'package:takedat_app/screens/employees/bloc/employee_compliance_event.dart';
 import 'package:takedat_app/screens/employees/bloc/employee_compliance_state.dart';
+import 'package:takedat_app/screens/employees/ui/admin_employee_edit_screen.dart';
 import 'package:takedat_app/screens/employees/widget/employee_card.dart';
+import 'package:takedat_app/screens/profile/bloc/profile_bloc.dart';
+import 'package:takedat_app/screens/profile/bloc/profile_event.dart';
 
 /// =======================================
 /// SCREEN
@@ -37,6 +42,26 @@ class _EmployeeComplianceScreenState extends State<EmployeeComplianceScreen> {
     bloc.add(LoadEmployeeComplianceEvent());
 
     _scrollController.addListener(_pagination);
+  }
+
+  Future<void> _openEditScreen(
+    BuildContext ctx,
+    EmployeeComplianceItem item,
+  ) async {
+    await Navigator.push(
+      ctx,
+      MaterialPageRoute(
+        builder: (_) => BlocProvider(
+          create: (_) => ProfileBloc(
+            profileRepository: ProfileRepository(),
+            userRepository: UserRepository(),
+          )..add(LoadProfileEvent(userId: item.user.id!)),
+          child: AdminEmployeeEditScreen(employee: item),
+        ),
+      ),
+    );
+    if (!mounted) return;
+    bloc.add(LoadEmployeeComplianceEvent(refresh: true));
   }
 
   void _pagination() {
@@ -114,6 +139,8 @@ class _EmployeeComplianceScreenState extends State<EmployeeComplianceScreen> {
                                     ToggleExpandEmployeeEvent(item.user.id!),
                                   );
                                 },
+
+                                onEdit: () => _openEditScreen(context, item),
                               );
                             },
                           );

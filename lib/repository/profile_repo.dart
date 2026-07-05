@@ -71,9 +71,14 @@ class ProfileRepository {
     required ActCertificateModel model,
   }) async {
     try {
+      final data = model.toJson();
+      // Never overwrite an existing URL with null — only update when a new
+      // file was actually uploaded for that side.
+      if (model.actOrangeUrl == null) data.remove('act_orange_url');
+      if (model.actBlueUrl == null) data.remove('act_blue_url');
       await _client
           .from('act_certificate')
-          .update(model.toJson())
+          .update(data)
           .eq('id', model.id!);
     } catch (e) {
       throw Exception("Failed to update act certificate : $e");
@@ -87,9 +92,14 @@ class ProfileRepository {
     required SharecodeFirstAidModel model,
   }) async {
     try {
+      final data = model.toJson();
+      // Never overwrite an existing URL with null — only update when a new
+      // file was actually uploaded for that side.
+      if (model.shareCodeUrl == null) data.remove('share_code_url');
+      if (model.firstAidUrl == null) data.remove('first_aid_url');
       await _client
           .from('sharecode_first_aid')
-          .update(model.toJson())
+          .update(data)
           .eq('id', model.id!);
     } catch (e) {
       throw Exception("Failed to update sharecode/first aid : $e");
@@ -134,6 +144,26 @@ class ProfileRepository {
           .eq('id', userId);
     } catch (e) {
       throw Exception("Failed to update user profile : $e");
+    }
+  }
+
+  /// ==============================
+  /// UPDATE BASIC PROFILE (name, phone, address only)
+  /// ==============================
+  Future<void> updateBasicProfile({
+    required String userId,
+    required String fullName,
+    required String phone,
+    required String address,
+  }) async {
+    try {
+      await _client.from('users').update({
+        'full_name': fullName,
+        'phone': phone,
+        'address': address,
+      }).eq('id', userId);
+    } catch (e) {
+      throw Exception("Failed to update profile: $e");
     }
   }
 

@@ -187,6 +187,25 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     /// - Same paths as registration → overwrites old files.
     /// =====================================================
 
+    /// =====================================================
+    /// UPDATE USER PROFILE (name, phone, address)
+    /// =====================================================
+
+    on<UpdateUserProfileEvent>((event, emit) async {
+      emit(DocumentUpdating(documentType: "PROFILE"));
+      try {
+        await profileRepository.updateBasicProfile(
+          userId: event.userId,
+          fullName: event.fullName,
+          phone: event.phone,
+          address: event.address,
+        );
+        emit(DocumentUpdateSuccess(documentType: "PROFILE"));
+      } catch (e) {
+        emit(ProfileFailure(e.toString()));
+      }
+    });
+
     on<UpdateSharecodeFirstAidEvent>((event, emit) async {
       emit(DocumentUpdating(documentType: "SHARECODE"));
 

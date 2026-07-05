@@ -127,3 +127,21 @@ class UpdateSharecodeFirstAidEvent extends ProfileEvent {
     this.firstAidExpiry,
   });
 }
+
+/// =====================================================
+/// UPDATE USER PROFILE (name, phone, address)
+/// =====================================================
+
+class UpdateUserProfileEvent extends ProfileEvent {
+  final String userId;
+  final String fullName;
+  final String phone;
+  final String address;
+
+  UpdateUserProfileEvent({
+    required this.userId,
+    required this.fullName,
+    required this.phone,
+    required this.address,
+  });
+}
