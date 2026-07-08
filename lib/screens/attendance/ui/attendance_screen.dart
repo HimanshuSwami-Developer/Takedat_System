@@ -45,11 +45,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   DateTime? filterStartDate;
   DateTime? filterEndDate;
   String? filterStatus;
+  String? filterCompanyCode;
+
+  static const _companies = [
+    {'code': 'valeron_protection_group', 'label': 'Valeron Protection Group'},
+    {'code': 'tybar_security',           'label': 'Tybar Security'},
+    {'code': 'gough_and_kelly',          'label': 'Gough & Kelly'},
+  ];
 
   bool get hasActiveFilter {
     return filterStartDate != null ||
         filterEndDate != null ||
-        filterStatus != null;
+        filterStatus != null ||
+        filterCompanyCode != null;
   }
 
   late final AttendanceRepository attendanceRepository;
@@ -411,6 +419,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     DateTime? tempStartDate = filterStartDate;
     DateTime? tempEndDate = filterEndDate;
     String? tempStatus = filterStatus;
+    String? tempCompanyCode = filterCompanyCode;
 
     // ✅ Capture bloc reference before entering the sheet's builder
     final bloc = context.read<AttendanceBloc>();
@@ -519,6 +528,20 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                 setSheetState(() => tempStatus = value); // ✅
                               },
                             ),
+                            CustomDropdown<String>(
+                              label: "Company",
+                              hint: "Select company",
+                              icon: Icons.business_outlined,
+                              items: _companies.map((c) => c['code']!).toList(),
+                              itemLabel: (code) => _companies
+                                  .firstWhere(
+                                    (c) => c['code'] == code,
+                                    orElse: () => {'label': code},
+                                  )['label']!,
+                              onChanged: (value) {
+                                setSheetState(() => tempCompanyCode = value);
+                              },
+                            ),
                             const SizedBox(height: 20),
                           ],
                         ),
@@ -536,6 +559,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                   filterStartDate = null;
                                   filterEndDate = null;
                                   filterStatus = null;
+                                  filterCompanyCode = null;
                                 });
                                 bloc.add(
                                   FilterAttendanceEvent(),
@@ -556,12 +580,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                   filterStartDate = tempStartDate;
                                   filterEndDate = tempEndDate;
                                   filterStatus = tempStatus;
+                                  filterCompanyCode = tempCompanyCode;
                                 });
                                 bloc.add(
                                   FilterAttendanceEvent(
                                     startDate: tempStartDate,
                                     endDate: tempEndDate,
                                     status: tempStatus,
+                                    companyCode: tempCompanyCode,
                                   ),
                                 );
                                 Navigator.pop(

@@ -21,6 +21,12 @@ class SearchEmployeeComplianceEvent
   );
 }
 
+class FilterEmployeeComplianceEvent extends EmployeeComplianceEvent {
+  final String? companyCode;
+
+  FilterEmployeeComplianceEvent({this.companyCode});
+}
+
 class ToggleExpandEmployeeEvent
     extends EmployeeComplianceEvent {
 

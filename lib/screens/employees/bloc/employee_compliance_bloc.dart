@@ -17,6 +17,8 @@ class EmployeeComplianceBloc
 
     on<SearchEmployeeComplianceEvent>(_onSearch);
 
+    on<FilterEmployeeComplianceEvent>(_onFilter);
+
     on<ToggleExpandEmployeeEvent>(_onToggleExpand);
   }
 
@@ -29,6 +31,8 @@ class EmployeeComplianceBloc
   bool _isLoading = false;
 
   String _search = '';
+
+  String? _companyCode;
 
   List<EmployeeComplianceItem> _employees = [];
 
@@ -62,6 +66,8 @@ class EmployeeComplianceBloc
         limit: _limit,
 
         search: _search,
+
+        companyCode: _companyCode,
       );
 
       final items = response.map((e) {
@@ -123,6 +129,21 @@ class EmployeeComplianceBloc
 
     _employees.clear();
 
+    add(LoadEmployeeComplianceEvent(refresh: true));
+  }
+
+  /// =====================================================
+  /// FILTER BY COMPANY
+  /// =====================================================
+
+  Future<void> _onFilter(
+    FilterEmployeeComplianceEvent event,
+    Emitter<EmployeeComplianceState> emit,
+  ) async {
+    _companyCode = event.companyCode;
+    _page = 0;
+    _hasReachedMax = false;
+    _employees.clear();
     add(LoadEmployeeComplianceEvent(refresh: true));
   }
 

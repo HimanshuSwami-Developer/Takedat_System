@@ -28,11 +28,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
   String? _filterStatus;          // 'pending' | 'paid' | 'cancelled' | null
   DateTime? _filterShiftFrom;
   DateTime? _filterShiftTo;
+  String? _filterCompanyCode;
+
+  static const _companies = [
+    {'code': 'valeron_protection_group', 'label': 'Valeron Protection Group'},
+    {'code': 'tybar_security',           'label': 'Tybar Security'},
+    {'code': 'gough_and_kelly',          'label': 'Gough & Kelly'},
+  ];
+
+  String _companyLabel(String code) =>
+      _companies.firstWhere((c) => c['code'] == code,
+          orElse: () => {'label': code})['label']!;
 
   bool get _hasActiveFilter =>
       _filterStatus != null ||
       _filterShiftFrom != null ||
-      _filterShiftTo != null;
+      _filterShiftTo != null ||
+      _filterCompanyCode != null;
 
   @override
   void initState() {
@@ -90,6 +102,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
           23, 59, 59,
         );
         if (end == null || end.isAfter(toEnd)) return false;
+      }
+
+      // Company filter
+      if (_filterCompanyCode != null &&
+          p.user?.companyCode != _filterCompanyCode) {
+        return false;
       }
 
       return true;
@@ -245,6 +263,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 _filterShiftTo = null;
               }),
             ),
+          if (_filterCompanyCode != null)
+            _FilterChip(
+              label: _companyLabel(_filterCompanyCode!),
+              onRemove: () => setState(() => _filterCompanyCode = null),
+            ),
         ],
       ),
     );
@@ -306,6 +329,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     _filterStatus = null;
                     _filterShiftFrom = null;
                     _filterShiftTo = null;
+                    _filterCompanyCode = null;
                   }),
                   child: const Text("Clear filters"),
                 ),
@@ -393,6 +417,8 @@ void _openFilterSheet(BuildContext screenCtx) {
   DateTime? tempFrom = _filterShiftFrom;
 
   DateTime? tempTo = _filterShiftTo;
+
+  String? tempCompanyCode = _filterCompanyCode;
 
   showModalBottomSheet(
     context: screenCtx,
@@ -627,6 +653,38 @@ void _openFilterSheet(BuildContext screenCtx) {
                         ),
                       ),
 
+                    const SizedBox(height: 26),
+
+                    /// =================================================
+                    /// COMPANY
+                    /// =================================================
+
+                    _SectionLabel(label: "Company"),
+
+                    const SizedBox(height: 12),
+
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        _StatusFilterChip(
+                          label: "All",
+                          color: Colors.grey.shade600,
+                          isSelected: tempCompanyCode == null,
+                          onTap: () => setSheetState(() => tempCompanyCode = null),
+                        ),
+                        ..._companies.map(
+                          (c) => _StatusFilterChip(
+                            label: c['label']!,
+                            color: AppColors.primary,
+                            isSelected: tempCompanyCode == c['code'],
+                            onTap: () =>
+                                setSheetState(() => tempCompanyCode = c['code']),
+                          ),
+                        ),
+                      ],
+                    ),
+
                     const SizedBox(height: 32),
 
                     /// =================================================
@@ -653,6 +711,9 @@ void _openFilterSheet(BuildContext screenCtx) {
                                     null;
 
                                 _filterShiftTo =
+                                    null;
+
+                                _filterCompanyCode =
                                     null;
                               });
 
@@ -696,6 +757,9 @@ void _openFilterSheet(BuildContext screenCtx) {
 
                                 _filterShiftTo =
                                     tempTo;
+
+                                _filterCompanyCode =
+                                    tempCompanyCode;
                               });
 
                               Navigator.pop(

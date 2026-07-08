@@ -137,11 +137,15 @@ class UpdateUserProfileEvent extends ProfileEvent {
   final String fullName;
   final String phone;
   final String address;
+  final String empId;
+  final String companyCode;
 
   UpdateUserProfileEvent({
     required this.userId,
     required this.fullName,
     required this.phone,
     required this.address,
+    required this.empId,
+    required this.companyCode,
   });
 }

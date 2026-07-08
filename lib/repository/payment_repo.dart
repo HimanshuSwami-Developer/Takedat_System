@@ -36,7 +36,8 @@ class PaymentTrackRepository {
           phone,
           role,
           address,
-          is_active
+          is_active,
+          company_code
         ),
         payment_track(
           payment_id,

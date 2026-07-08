@@ -203,6 +203,7 @@ class AttendanceRepository {
     DateTime? startDate,
     DateTime? endDate,
     String? status,
+    String? companyCode,
   }) async {
     final from = (page - 1) * limit;
     final to = from + limit - 1;
@@ -214,7 +215,8 @@ class AttendanceRepository {
         full_name,
         email,
         phone,
-        emp_id
+        emp_id,
+        company_code
       ),
       shifts(
         id,
@@ -244,6 +246,11 @@ class AttendanceRepository {
     if (status != null && status.isNotEmpty) {
       query = query.eq('status', status.toLowerCase());
     }
+
+    if (companyCode != null && companyCode.isNotEmpty) {
+      query = query.eq('company_code', companyCode, referencedTable: 'users');
+    }
+
     final response = await query
         .order('created_at', ascending: false)
         .range(from, to);

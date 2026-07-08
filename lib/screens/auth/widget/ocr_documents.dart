@@ -351,9 +351,24 @@ class _OCRDocumentCardState extends State<OCRDocumentCard> {
       } else if (widget.title == "Blue ACT Certification" ||
           widget.title == "Orange ACT Certification") {
         final r = await ACTCertificateOCR.extractFromImage(image);
-        expiryDate = r['completionDate'] ?? '';
+        final completionDateStr = r['completionDate'] ?? '';
         holderName = r['holderName'] ?? '';
-        documentNumber = expiryDate;
+        // Expiry = completion date + 3 years
+        final completionDt = _parseDate(completionDateStr);
+        if (completionDt != null) {
+          final expiry = DateTime(
+            completionDt.year + 3,
+            completionDt.month,
+            completionDt.day,
+          );
+          expiryDate =
+              '${expiry.day.toString().padLeft(2, '0')}/'
+              '${expiry.month.toString().padLeft(2, '0')}/'
+              '${expiry.year}';
+        } else {
+          expiryDate = completionDateStr;
+        }
+        documentNumber = completionDateStr; // show original completion date as doc number
       } else if (widget.title == "Share Code") {
         final r = await ShareCodeOCR.extractFromImage(image);
         documentNumber = r['shareCode'] ?? '';

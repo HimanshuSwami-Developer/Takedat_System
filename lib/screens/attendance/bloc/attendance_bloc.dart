@@ -25,6 +25,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
   DateTime? filterStartDate;
   DateTime? filterEndDate;
   String? filterStatus;
+  String? filterCompanyCode;
 
   AttendanceBloc(this.repository) : super(AttendanceInitial()) {
     /// ==================================================
@@ -141,6 +142,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
           startDate: filterStartDate,
           endDate: filterEndDate,
           status: filterStatus,
+          companyCode: filterCompanyCode,
         );
 
         if (response.length < 20) {
@@ -203,6 +205,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
         filterStartDate = event.startDate;
         filterEndDate = event.endDate;
         filterStatus = event.status;
+        filterCompanyCode = event.companyCode;
 
         currentPage = 1;
         hasMore = true;
@@ -213,6 +216,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
           startDate: filterStartDate,
           endDate: filterEndDate,
           status: filterStatus,
+          companyCode: filterCompanyCode,
         );
 
         if (attendance.length < 20) {

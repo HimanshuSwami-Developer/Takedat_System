@@ -32,7 +32,15 @@ class _AdminEmployeeEditScreenState extends State<AdminEmployeeEditScreen> {
   final _nameCtrl    = TextEditingController();
   final _phoneCtrl   = TextEditingController();
   final _addressCtrl = TextEditingController();
+  final _empIdCtrl   = TextEditingController();
   bool _controllersSeeded = false;
+  String _selectedCompanyCode = '';
+
+  static const _companies = [
+    {'code': 'valeron_protection_group', 'label': 'Valeron Protection Group'},
+    {'code': 'tybar_security',           'label': 'Tybar Security'},
+    {'code': 'gough_and_kelly',          'label': 'Gough & Kelly'},
+  ];
 
   String get _userId    => widget.employee.user.id!;
   String get _userEmail => widget.employee.user.email;
@@ -43,9 +51,13 @@ class _AdminEmployeeEditScreenState extends State<AdminEmployeeEditScreen> {
   void initState() {
     super.initState();
     // Pre-fill from locally-cached data while fresh data loads
-    _nameCtrl.text    = widget.employee.user.fullName;
-    _phoneCtrl.text   = widget.employee.user.phone;
-    _addressCtrl.text = widget.employee.user.address;
+    _nameCtrl.text         = widget.employee.user.fullName;
+    _phoneCtrl.text        = widget.employee.user.phone;
+    _addressCtrl.text      = widget.employee.user.address;
+    _empIdCtrl.text        = widget.employee.user.empId;
+    _selectedCompanyCode   = widget.employee.user.companyCode.isNotEmpty
+        ? widget.employee.user.companyCode
+        : _companies.first['code']!;
     _controllersSeeded = true;
 
     context.read<ProfileBloc>().add(LoadProfileEvent(userId: _userId));
@@ -56,6 +68,7 @@ class _AdminEmployeeEditScreenState extends State<AdminEmployeeEditScreen> {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
     _addressCtrl.dispose();
+    _empIdCtrl.dispose();
     super.dispose();
   }
 
@@ -126,6 +139,8 @@ class _AdminEmployeeEditScreenState extends State<AdminEmployeeEditScreen> {
           if (state is DocumentUpdateSuccess) {
             if (state.documentType == "PROFILE") {
               AppToast.success(context, "Profile saved successfully");
+              // Allow the next ProfileLoaded to re-seed controllers with fresh server data
+              _controllersSeeded = false;
             } else {
               Navigator.pop(context); // close bottom sheet
               ScaffoldMessenger.of(context).showSnackBar(
@@ -157,9 +172,14 @@ class _AdminEmployeeEditScreenState extends State<AdminEmployeeEditScreen> {
           if (state is ProfileLoaded) {
             // Seed controllers once from server after first load
             if (!_controllersSeeded) {
-              _nameCtrl.text    = state.user['full_name'] ?? '';
-              _phoneCtrl.text   = state.user['phone'] ?? '';
-              _addressCtrl.text = state.user['address'] ?? '';
+              _nameCtrl.text       = state.user['full_name'] ?? '';
+              _phoneCtrl.text      = state.user['phone'] ?? '';
+              _addressCtrl.text    = state.user['address'] ?? '';
+              _empIdCtrl.text      = state.user['emp_id'] ?? '';
+              final serverCode     = state.user['company_code'] as String? ?? '';
+              _selectedCompanyCode = serverCode.isNotEmpty
+                  ? serverCode
+                  : _companies.first['code']!;
               _controllersSeeded = true;
             }
 
@@ -355,6 +375,12 @@ class _AdminEmployeeEditScreenState extends State<AdminEmployeeEditScreen> {
 
           // ── FIELDS ──────────────────────────────────────
           _editField(
+            controller: _empIdCtrl,
+            label: "Employee Code",
+            icon: Icons.badge_outlined,
+          ),
+          const SizedBox(height: 12),
+          _editField(
             controller: _nameCtrl,
             label: "Full Name",
             icon: Icons.person_outline,
@@ -372,6 +398,52 @@ class _AdminEmployeeEditScreenState extends State<AdminEmployeeEditScreen> {
             label: "Address",
             icon: Icons.location_on_outlined,
             maxLines: 2,
+          ),
+          const SizedBox(height: 12),
+          // ── COMPANY DROPDOWN ────────────────────────────
+          StatefulBuilder(
+            builder: (context, setLocal) => DropdownButtonFormField<String>(
+              value: _selectedCompanyCode.isNotEmpty &&
+                      _companies.any((c) => c['code'] == _selectedCompanyCode)
+                  ? _selectedCompanyCode
+                  : _companies.first['code'],
+              decoration: InputDecoration(
+                labelText: "Company",
+                prefixIcon: const Icon(Icons.business_outlined, size: 18),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: const OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                  borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+                ),
+                filled: true,
+                fillColor: const Color(0xFFF7F8FA),
+              ),
+              items: _companies
+                  .map(
+                    (c) => DropdownMenuItem<String>(
+                      value: c['code'],
+                      child: Text(c['label']!),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (v) {
+                if (v != null) {
+                  setLocal(() => _selectedCompanyCode = v);
+                  setState(() => _selectedCompanyCode = v);
+                }
+              },
+            ),
           ),
 
           const SizedBox(height: 16),
@@ -396,7 +468,8 @@ class _AdminEmployeeEditScreenState extends State<AdminEmployeeEditScreen> {
                   onPressed: isSaving
                       ? null
                       : () {
-                          if (_nameCtrl.text.trim().isEmpty ||
+                          if (_empIdCtrl.text.trim().isEmpty ||
+                              _nameCtrl.text.trim().isEmpty ||
                               _phoneCtrl.text.trim().isEmpty ||
                               _addressCtrl.text.trim().isEmpty) {
                             AppToast.warning(context, "Please fill all fields");
@@ -405,9 +478,11 @@ class _AdminEmployeeEditScreenState extends State<AdminEmployeeEditScreen> {
                           context.read<ProfileBloc>().add(
                             UpdateUserProfileEvent(
                               userId: _userId,
+                              empId: _empIdCtrl.text.trim(),
                               fullName: _nameCtrl.text.trim(),
                               phone: _phoneCtrl.text.trim(),
                               address: _addressCtrl.text.trim(),
+                              companyCode: _selectedCompanyCode,
                             ),
                           );
                         },

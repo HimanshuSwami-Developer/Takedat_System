@@ -155,12 +155,16 @@ class ProfileRepository {
     required String fullName,
     required String phone,
     required String address,
+    required String empId,
+    required String companyCode,
   }) async {
     try {
       await _client.from('users').update({
         'full_name': fullName,
         'phone': phone,
         'address': address,
+        'emp_id': empId,
+        'company_code': companyCode,
       }).eq('id', userId);
     } catch (e) {
       throw Exception("Failed to update profile: $e");

@@ -199,6 +199,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           fullName: event.fullName,
           phone: event.phone,
           address: event.address,
+          empId: event.empId,
+          companyCode: event.companyCode,
         );
         emit(DocumentUpdateSuccess(documentType: "PROFILE"));
       } catch (e) {

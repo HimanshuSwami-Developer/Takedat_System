@@ -33,6 +33,20 @@ class _EmployeeComplianceScreenState extends State<EmployeeComplianceScreen> {
 
   late EmployeeComplianceBloc bloc;
 
+  String? _filterCompanyCode;
+
+  static const _companies = [
+    {'code': 'valeron_protection_group', 'label': 'Valeron Protection Group'},
+    {'code': 'tybar_security',           'label': 'Tybar Security'},
+    {'code': 'gough_and_kelly',          'label': 'Gough & Kelly'},
+  ];
+
+  bool get _hasActiveFilter => _filterCompanyCode != null;
+
+  String _companyLabel(String code) =>
+      _companies.firstWhere((c) => c['code'] == code,
+          orElse: () => {'label': code})['label']!;
+
   @override
   void initState() {
     super.initState();
@@ -93,8 +107,19 @@ class _EmployeeComplianceScreenState extends State<EmployeeComplianceScreen> {
 
           child: Column(
             children: [
-              /// SEARCH
-              _searchField(),
+              /// SEARCH + FILTER
+              Row(
+                children: [
+                  Expanded(child: _searchField()),
+                  const SizedBox(width: 10),
+                  _filterButton(),
+                ],
+              ),
+
+              if (_hasActiveFilter) ...[
+                const SizedBox(height: 8),
+                _activeFilterChip(),
+              ],
 
               const SizedBox(height: 14),
 
@@ -246,25 +271,260 @@ class _EmployeeComplianceScreenState extends State<EmployeeComplianceScreen> {
 
   /// SEARCH FIELD
   Widget _searchField() {
-    return Container(
-      width: double.infinity,
-      child: CustomTextField(
-        onChanged: (value) {
-          /// CANCEL OLD TIMER
-          if (_debounce?.isActive ?? false) {
-            _debounce?.cancel();
-          }
+    return CustomTextField(
+      controller: searchController,
+      onChanged: (value) {
+        if (_debounce?.isActive ?? false) _debounce?.cancel();
+        _debounce = Timer(const Duration(milliseconds: 500), () {
+          bloc.add(SearchEmployeeComplianceEvent(value.trim()));
+        });
+      },
+      label: "",
+      hint: "Search employee or ID or number or email",
+      icon: Icons.search,
+    );
+  }
 
-          /// DEBOUNCE
-          _debounce = Timer(const Duration(milliseconds: 500), () {
-            final query = value.trim();
+  Widget _filterButton() {
+    return GestureDetector(
+      onTap: _openFilterSheet,
+      child: Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          color: _hasActiveFilter
+              ? AppColors.primary.withValues(alpha: 0.1)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _hasActiveFilter
+                ? AppColors.primary
+                : Colors.grey.shade300,
+          ),
+        ),
+        child: Icon(
+          Icons.tune_rounded,
+          color: _hasActiveFilter ? AppColors.primary : Colors.grey.shade600,
+          size: 20,
+        ),
+      ),
+    );
+  }
 
-            bloc.add(SearchEmployeeComplianceEvent(query));
-          });
-        },
-        label: "",
-        hint: "Search employee or ID or number or email",
-        icon: Icons.search,
+  Widget _activeFilterChip() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _companyLabel(_filterCompanyCode!),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 6),
+            GestureDetector(
+              onTap: () {
+                setState(() => _filterCompanyCode = null);
+                bloc.add(FilterEmployeeComplianceEvent());
+              },
+              child: Icon(Icons.close, size: 14, color: AppColors.primary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openFilterSheet() {
+    String? tempCode = _filterCompanyCode;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (_, setSheet) {
+            return SafeArea(
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Filter Employees",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Show only employees from a specific company",
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "COMPANY",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        _CompanyChip(
+                          label: "All",
+                          isSelected: tempCode == null,
+                          onTap: () => setSheet(() => tempCode = null),
+                        ),
+                        ..._companies.map(
+                          (c) => _CompanyChip(
+                            label: c['label']!,
+                            isSelected: tempCode == c['code'],
+                            onTap: () => setSheet(() => tempCode = c['code']),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 50,
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: Colors.grey.shade300),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              onPressed: () {
+                                setState(() => _filterCompanyCode = null);
+                                bloc.add(FilterEmployeeComplianceEvent());
+                                Navigator.pop(sheetCtx);
+                              },
+                              child: const Text(
+                                "Reset",
+                                style: TextStyle(color: Colors.black54),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: SizedBox(
+                            height: 50,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                            onPressed: () {
+                              setState(() => _filterCompanyCode = tempCode);
+                              bloc.add(
+                                FilterEmployeeComplianceEvent(
+                                  companyCode: tempCode,
+                                ),
+                              );
+                              Navigator.pop(sheetCtx);
+                            },
+                            child: const Text(
+                              "Apply",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _CompanyChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _CompanyChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withValues(alpha: 0.1)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : Colors.grey.shade200,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? AppColors.primary : Colors.grey.shade600,
+          ),
+        ),
       ),
     );
   }

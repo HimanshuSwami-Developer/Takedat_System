@@ -54,11 +54,13 @@ class FilterAttendanceEvent extends AttendanceEvent {
   final DateTime? startDate;
   final DateTime? endDate;
   final String? status;
+  final String? companyCode;
 
   FilterAttendanceEvent({
     this.startDate,
     this.endDate,
     this.status,
+    this.companyCode,
   });
 }
 

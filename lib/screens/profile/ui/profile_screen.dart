@@ -637,10 +637,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: "Address",
             value: user['address'] ?? '',
           ),
+          const SizedBox(height: 14),
+          Divider(color: Colors.grey.shade300, height: 1),
+          const SizedBox(height: 14),
+          _infoTile(
+            icon: Icons.business_outlined,
+            title: "Company",
+            value: _companyLabel(user['company_code'] as String? ?? ''),
+          ),
         ],
       ),
     );
   }
+
+  static const _companyMap = {
+    'valeron_protection_group': 'Valeron Protection Group',
+    'tybar_security':           'Tybar Security',
+    'gough_and_kelly':          'Gough & Kelly',
+  };
+
+  String _companyLabel(String code) =>
+      _companyMap[code] ?? (code.isNotEmpty ? code : '—');
 
   // ─────────────────────────────────────────────────────────
   // DOCUMENT TILE

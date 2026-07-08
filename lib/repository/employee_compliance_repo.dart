@@ -52,6 +52,8 @@ class EmployeeComplianceRepository {
     int limit = 20,
 
     String search = '',
+
+    String? companyCode,
   }) async {
 
     final from = page * limit;
@@ -72,6 +74,7 @@ class EmployeeComplianceRepository {
           phone,
           address,
           role,
+          company_code,
           is_active,
           created_at,
 
@@ -111,6 +114,10 @@ class EmployeeComplianceRepository {
         'emp_id.ilike.%$search%,'
         'phone.ilike.%$search%',
       );
+    }
+
+    if (companyCode != null && companyCode.isNotEmpty) {
+      query = query.eq('company_code', companyCode);
     }
 
     /// =====================================================
@@ -233,6 +240,7 @@ class EmployeeComplianceRepository {
           phone,
           address,
           role,
+          company_code,
           is_active,
           created_at,
 
